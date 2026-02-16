@@ -1,0 +1,389 @@
+{
+  "id": "patients",
+  "version": "0.1.0",
+  "apiVersion": "2.0",
+  "assets": {
+    "styles": [
+      "./dist/assets/tailwind.css",
+      "./dist/assets/fontawesome/css/all.min.css"
+    ]
+  },
+  "contributes": {
+    "menus": [
+      {
+        "path": "Pacientes",
+        "order": 1,
+        "color": "#10B981",
+        "icon": "assets/icons/paw.svg"
+      },
+      {
+        "path": "Pacientes/Mascotas",
+        "order": 1,
+        "viewId": "patients.list.open"
+      },
+      {
+        "path": "Pacientes/Dueños",
+        "order": 2,
+        "viewId": "patients.owners.open"
+      }
+    ],
+    "views": [
+      {
+        "id": "patients.list.open",
+        "title": "Pacientes",
+        "component": "./dist/views/patients-list/index.js",
+        "export": "PatientsListView"
+      },
+      {
+        "id": "patients.detail.open",
+        "title": "Ficha Paciente",
+        "component": "./dist/views/patient-detail/index.js",
+        "export": "PatientDetailView"
+      },
+      {
+        "id": "patients.create.open",
+        "title": "Nuevo Paciente",
+        "component": "./dist/views/patient-form/index.js",
+        "export": "PatientFormView"
+      },
+      {
+        "id": "patients.owners.open",
+        "title": "Dueños",
+        "component": "./dist/views/owners-list/index.js",
+        "export": "OwnersListView"
+      },
+      {
+        "id": "patients.owner-detail.open",
+        "title": "Ficha Dueño",
+        "component": "./dist/views/owner-detail/index.js",
+        "export": "OwnerDetailView"
+      }
+    ],
+    "repositories": [
+      {
+        "module": "./dist/repositories/pet.repository.js",
+        "export": "PetRepository",
+        "prefix": "patients.pets"
+      },
+      {
+        "module": "./dist/repositories/vet-owner.repository.js",
+        "export": "VetOwnerRepository",
+        "prefix": "patients.owners"
+      }
+    ],
+    "settings": {
+      "groups": [
+        {
+          "id": "patients",
+          "label": "Pacientes",
+          "order": 50
+        }
+      ],
+      "pages": [
+        {
+          "id": "patients.general",
+          "group": "patients",
+          "label": "General",
+          "icon": "assets/icons/general.svg",
+          "order": 10
+        },
+        {
+          "id": "patients.campos",
+          "group": "patients",
+          "label": "Campos",
+          "icon": "assets/icons/campos.svg",
+          "order": 20
+        },
+        {
+          "id": "patients.tabla",
+          "group": "patients",
+          "label": "Tabla",
+          "icon": "assets/icons/tabla.svg",
+          "order": 30
+        }
+      ],
+      "sections": [
+        {
+          "id": "patients.general.main",
+          "page": "patients.general",
+          "label": "General",
+          "order": 10,
+          "items": [
+            {
+              "key": "patients.species.dog",
+              "type": "boolean",
+              "label": "Perro",
+              "description": "Habilitar especie Perro",
+              "default": true,
+              "tags": [
+                "patients",
+                "species",
+                "dog",
+                "perro"
+              ]
+            },
+            {
+              "key": "patients.species.cat",
+              "type": "boolean",
+              "label": "Gato",
+              "description": "Habilitar especie Gato",
+              "default": true,
+              "tags": [
+                "patients",
+                "species",
+                "cat",
+                "gato"
+              ]
+            },
+            {
+              "key": "patients.species.bird",
+              "type": "boolean",
+              "label": "Ave",
+              "description": "Habilitar especie Ave",
+              "default": false,
+              "tags": [
+                "patients",
+                "species",
+                "bird",
+                "ave"
+              ]
+            },
+            {
+              "key": "patients.species.reptile",
+              "type": "boolean",
+              "label": "Reptil",
+              "description": "Habilitar especie Reptil",
+              "default": false,
+              "tags": [
+                "patients",
+                "species",
+                "reptile",
+                "reptil"
+              ]
+            },
+            {
+              "key": "patients.species.rodent",
+              "type": "boolean",
+              "label": "Roedor",
+              "description": "Habilitar especie Roedor",
+              "default": false,
+              "tags": [
+                "patients",
+                "species",
+                "rodent",
+                "roedor"
+              ]
+            },
+            {
+              "key": "patients.species.other",
+              "type": "boolean",
+              "label": "Otro",
+              "description": "Habilitar especie Otro (exóticos, etc.)",
+              "default": true,
+              "tags": [
+                "patients",
+                "species",
+                "other",
+                "otro"
+              ]
+            },
+            {
+              "key": "patients.defaults.species",
+              "type": "enum",
+              "label": "Especie por defecto",
+              "description": "Especie preseleccionada al crear un paciente",
+              "default": "dog",
+              "options": [
+                "dog",
+                "cat",
+                "bird",
+                "reptile",
+                "rodent",
+                "other"
+              ],
+              "tags": [
+                "patients",
+                "defaults",
+                "species",
+                "especie",
+                "por",
+                "defecto"
+              ]
+            },
+            {
+              "key": "patients.behavior.openDetailOnCreate",
+              "type": "boolean",
+              "label": "Abrir ficha al crear",
+              "description": "Al crear un paciente, abrir automáticamente su ficha",
+              "default": true,
+              "tags": [
+                "patients",
+                "behavior",
+                "opendetailoncreate",
+                "abrir",
+                "ficha",
+                "crear"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "patients.campos.main",
+          "page": "patients.campos",
+          "label": "Campos",
+          "order": 10,
+          "items": [
+            {
+              "key": "patients.required.microchip",
+              "type": "boolean",
+              "label": "Microchip obligatorio",
+              "description": "Requerir número de microchip al crear paciente",
+              "default": false,
+              "tags": [
+                "patients",
+                "required",
+                "microchip",
+                "obligatorio"
+              ]
+            },
+            {
+              "key": "patients.required.sex",
+              "type": "boolean",
+              "label": "Sexo obligatorio",
+              "description": "Requerir sexo al crear paciente",
+              "default": false,
+              "tags": [
+                "patients",
+                "required",
+                "sex",
+                "sexo",
+                "obligatorio"
+              ]
+            },
+            {
+              "key": "patients.required.birthDate",
+              "type": "boolean",
+              "label": "Fecha de nacimiento obligatoria",
+              "description": "Requerir fecha de nacimiento al crear paciente",
+              "default": false,
+              "tags": [
+                "patients",
+                "required",
+                "birthdate",
+                "fecha",
+                "nacimiento",
+                "obligatoria"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "patients.tabla.main",
+          "page": "patients.tabla",
+          "label": "Tabla",
+          "order": 10,
+          "items": [
+            {
+              "key": "patients.table.columns.breed",
+              "type": "boolean",
+              "label": "Raza",
+              "description": "Mostrar columna de raza",
+              "default": true,
+              "tags": [
+                "patients",
+                "table",
+                "columns",
+                "breed",
+                "raza"
+              ]
+            },
+            {
+              "key": "patients.table.columns.sex",
+              "type": "boolean",
+              "label": "Sexo",
+              "description": "Mostrar columna de sexo",
+              "default": false,
+              "tags": [
+                "patients",
+                "table",
+                "columns",
+                "sex",
+                "sexo"
+              ]
+            },
+            {
+              "key": "patients.table.columns.weight",
+              "type": "boolean",
+              "label": "Peso",
+              "description": "Mostrar columna de peso",
+              "default": false,
+              "tags": [
+                "patients",
+                "table",
+                "columns",
+                "weight",
+                "peso"
+              ]
+            },
+            {
+              "key": "patients.table.columns.microchip",
+              "type": "boolean",
+              "label": "Microchip",
+              "description": "Mostrar columna de microchip",
+              "default": false,
+              "tags": [
+                "patients",
+                "table",
+                "columns",
+                "microchip"
+              ]
+            },
+            {
+              "key": "patients.table.columns.status",
+              "type": "boolean",
+              "label": "Estado",
+              "description": "Mostrar columna de estado",
+              "default": true,
+              "tags": [
+                "patients",
+                "table",
+                "columns",
+                "status",
+                "estado"
+              ]
+            },
+            {
+              "key": "patients.table.columns.birthDate",
+              "type": "boolean",
+              "label": "Edad",
+              "description": "Mostrar columna de edad",
+              "default": true,
+              "tags": [
+                "patients",
+                "table",
+                "columns",
+                "birthdate",
+                "edad"
+              ]
+            },
+            {
+              "key": "patients.table.columns.reproductive",
+              "type": "boolean",
+              "label": "Estado reproductivo",
+              "description": "Mostrar columna de estado reproductivo",
+              "default": false,
+              "tags": [
+                "patients",
+                "table",
+                "columns",
+                "reproductive",
+                "estado",
+                "reproductivo"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
