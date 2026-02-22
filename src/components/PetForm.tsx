@@ -4,7 +4,7 @@
  */
 import { ContactPicker, ContactForm } from '@coongro/contacts';
 import type { Contact } from '@coongro/contacts';
-import { getHostReact, usePlugin } from '@coongro/plugin-sdk';
+import { getHostReact, getHostUI, usePlugin } from '@coongro/plugin-sdk';
 
 import { usePatientsSettings } from '../hooks/usePatientsSettings.js';
 import { usePet } from '../hooks/usePet.js';
@@ -14,7 +14,8 @@ import type { PetFormProps } from '../types/components.js';
 import type { Pet, PetCreateData } from '../types/pet.js';
 
 const React = getHostReact();
-const { useState, useEffect, useCallback, useRef } = React;
+const UI = getHostUI();
+const { useState, useEffect, useCallback } = React;
 
 const ALL_SPECIES_OPTIONS: Record<string, string> = {
   dog: 'Perro',
@@ -52,9 +53,6 @@ const REFERRAL_OPTIONS = [
   { label: 'Otro', value: 'other' },
 ];
 
-const inputClass =
-  'w-full h-9 px-3 text-sm rounded-lg border border-[var(--cg-input-border)] bg-[var(--cg-input-bg)] text-[var(--cg-text)] placeholder:text-[var(--cg-input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--cg-border-focus)]';
-
 export function PetForm(props: PetFormProps) {
   const { petId, defaults = {}, onSuccess, onCancel, className = '' } = props;
 
@@ -81,6 +79,10 @@ export function PetForm(props: PetFormProps) {
   // Datos veterinarios del dueño
   const [vetData, setVetData] = useState<Record<string, unknown>>({});
 
+  // Inputs controlados para ChipInput (Enter para agregar chip)
+  const [allergyInput, setAllergyInput] = useState('');
+  const [chronicInput, setChronicInput] = useState('');
+
   // Modal para crear contacto desde el picker
   const [showCreateContact, setShowCreateContact] = useState(false);
   const [createContactName, setCreateContactName] = useState('');
@@ -102,10 +104,8 @@ export function PetForm(props: PetFormProps) {
         reproductive_status: pet.reproductive_status ?? '',
         notes: pet.notes ?? '',
         is_active: pet.is_active,
-        allergies_text: Array.isArray(pet.allergies) ? pet.allergies.join(', ') : '',
-        chronic_text: Array.isArray(pet.chronic_conditions)
-          ? pet.chronic_conditions.join(', ')
-          : '',
+        allergies_list: Array.isArray(pet.allergies) ? pet.allergies : [],
+        chronic_list: Array.isArray(pet.chronic_conditions) ? pet.chronic_conditions : [],
       });
     }
   }, [isEdit, pet]);
@@ -113,6 +113,19 @@ export function PetForm(props: PetFormProps) {
   const handleChange = useCallback((key: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  /** Crea un handler de Enter para agregar chips a una lista en formData */
+  const makeChipKeyDown = useCallback(
+    (listKey: string, inputValue: string, clearInput: (v: string) => void) =>
+      (e: { key: string; preventDefault: () => void }) => {
+        if (e.key !== 'Enter' || !inputValue.trim()) return;
+        e.preventDefault();
+        const current = (formData[listKey] as string[]) ?? [];
+        handleChange(listKey, [...current, inputValue.trim()]);
+        clearInput('');
+      },
+    [formData, handleChange]
+  );
 
   const handleVetChange = useCallback((key: string, value: unknown) => {
     setVetData((prev) => ({ ...prev, [key]: value }));
@@ -132,16 +145,6 @@ export function PetForm(props: PetFormProps) {
     },
     [handleChange]
   );
-
-  // Cerrar modal con ESC
-  useEffect(() => {
-    if (!showCreateContact) return;
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowCreateContact(false);
-    };
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
-  }, [showCreateContact]);
 
   const handleSubmit = useCallback(
     async (e: { preventDefault: () => void }) => {
@@ -185,20 +188,11 @@ export function PetForm(props: PetFormProps) {
         return;
       }
 
-      // Parsear listas de texto a arrays
-      const allergiesText = (formData.allergies_text as string) ?? '';
-      const chronicText = (formData.chronic_text as string) ?? '';
-      const allergies = allergiesText
-        ? allergiesText
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
+      const allergies = (formData.allergies_list as string[])?.length
+        ? (formData.allergies_list as string[])
         : null;
-      const chronicConditions = chronicText
-        ? chronicText
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
+      const chronicConditions = (formData.chronic_list as string[])?.length
+        ? (formData.chronic_list as string[])
         : null;
 
       const petData: PetCreateData = {
@@ -246,9 +240,9 @@ export function PetForm(props: PetFormProps) {
       'div',
       { className: 'flex flex-col gap-4 p-4' },
       Array.from({ length: 8 }).map((_, i) =>
-        React.createElement('div', {
+        React.createElement(UI.Skeleton, {
           key: i,
-          className: 'h-10 rounded-lg bg-[var(--cg-skeleton)] animate-pulse',
+          className: 'h-10 rounded-lg',
         })
       )
     );
@@ -326,23 +320,31 @@ export function PetForm(props: PetFormProps) {
     // Sección 4: Alertas médicas
     renderSection(
       'Alertas médicas',
-      renderField(
-        'Alergias',
-        'allergies_text',
-        'text',
-        formData,
-        handleChange,
-        false,
-        'Separadas por coma: penicilina, ibuprofeno...'
+      React.createElement(
+        'div',
+        { className: 'flex flex-col gap-1.5' },
+        renderLabel('Alergias'),
+        React.createElement(UI.ChipInput, {
+          values: (formData.allergies_list as string[]) ?? [],
+          onValuesChange: (vals: string[]) => handleChange('allergies_list', vals),
+          inputValue: allergyInput,
+          onInputChange: setAllergyInput,
+          placeholder: 'Escribí y presioná Enter...',
+          onKeyDown: makeChipKeyDown('allergies_list', allergyInput, setAllergyInput),
+        })
       ),
-      renderField(
-        'Condiciones crónicas',
-        'chronic_text',
-        'text',
-        formData,
-        handleChange,
-        false,
-        'Separadas por coma: displasia, diabetes...'
+      React.createElement(
+        'div',
+        { className: 'flex flex-col gap-1.5' },
+        renderLabel('Condiciones crónicas'),
+        React.createElement(UI.ChipInput, {
+          values: (formData.chronic_list as string[]) ?? [],
+          onValuesChange: (vals: string[]) => handleChange('chronic_list', vals),
+          inputValue: chronicInput,
+          onInputChange: setChronicInput,
+          placeholder: 'Escribí y presioná Enter...',
+          onKeyDown: makeChipKeyDown('chronic_list', chronicInput, setChronicInput),
+        })
       )
     ),
 
@@ -384,12 +386,11 @@ export function PetForm(props: PetFormProps) {
         'div',
         { className: 'flex flex-col gap-1.5' },
         renderLabel('Notas'),
-        React.createElement('textarea', {
+        React.createElement(UI.Textarea, {
           value: (formData.notes as string) ?? '',
           onChange: (e: { target: { value: string } }) => handleChange('notes', e.target.value),
           placeholder: 'Notas adicionales...',
           rows: 3,
-          className: `${inputClass} h-auto py-2 resize-none`,
         })
       )
     ),
@@ -399,23 +400,21 @@ export function PetForm(props: PetFormProps) {
       'div',
       { className: 'flex gap-3 pt-2' },
       React.createElement(
-        'button',
+        UI.Button,
         {
           type: 'submit',
           disabled: isSaving || !formData.name || !formData.owner_id,
-          className:
-            'flex-1 h-10 rounded-lg text-sm font-medium bg-[var(--cg-accent)] text-[var(--cg-text-inverse)] hover:bg-[var(--cg-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors',
+          className: 'flex-1',
         },
         isSaving ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear paciente'
       ),
       onCancel &&
         React.createElement(
-          'button',
+          UI.Button,
           {
             type: 'button',
+            variant: 'outline',
             onClick: onCancel,
-            className:
-              'px-6 h-10 rounded-lg text-sm border border-[var(--cg-border)] text-[var(--cg-text)] hover:bg-[var(--cg-bg-hover)] transition-colors',
           },
           'Cancelar'
         )
@@ -423,70 +422,21 @@ export function PetForm(props: PetFormProps) {
     ), // cierre del form
 
     // Modal para crear contacto nuevo
-    showCreateContact &&
-      React.createElement(
-        'div',
-        {
-          className: 'fixed inset-0 z-[300] flex items-center justify-center',
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          onClick: (e: any) => {
-            if (e.target === e.currentTarget) setShowCreateContact(false);
-          },
-        },
-        React.createElement('div', {
-          className: 'absolute inset-0 bg-[var(--cg-bg-overlay)]',
-        }),
-        React.createElement(
-          'div',
-          {
-            className:
-              'relative w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-xl border border-[var(--cg-border)] bg-[var(--cg-bg)] shadow-xl animate-in fade-in-0 zoom-in-95',
-          },
-          React.createElement(
-            'div',
-            {
-              className:
-                'flex items-center justify-between px-6 py-4 border-b border-[var(--cg-border)]',
-            },
-            React.createElement(
-              'h2',
-              { className: 'text-lg font-semibold text-[var(--cg-text)]' },
-              'Nuevo dueño'
-            ),
-            React.createElement(
-              'button',
-              {
-                type: 'button',
-                onClick: () => setShowCreateContact(false),
-                className:
-                  'p-1.5 rounded-md text-[var(--cg-text-muted)] hover:bg-[var(--cg-bg-hover)]',
-              },
-              React.createElement(
-                'svg',
-                {
-                  width: 18,
-                  height: 18,
-                  viewBox: '0 0 24 24',
-                  fill: 'none',
-                  stroke: 'currentColor',
-                  strokeWidth: 2,
-                },
-                React.createElement('path', { d: 'M18 6L6 18M6 6l12 12' })
-              )
-            )
-          ),
-          React.createElement(
-            'div',
-            { className: 'p-6' },
-            React.createElement(ContactForm, {
-              defaults: { name: createContactName, type: 'person' },
-              hiddenFields: ['type'],
-              onSuccess: handleContactCreated,
-              onCancel: () => setShowCreateContact(false),
-            })
-          )
-        )
-      )
+    React.createElement(
+      UI.FormDialog,
+      {
+        open: showCreateContact,
+        onOpenChange: setShowCreateContact,
+        title: 'Nuevo dueño',
+        size: 'md',
+      },
+      React.createElement(ContactForm, {
+        defaults: { name: createContactName, type: 'person' },
+        hiddenFields: ['type'],
+        onSuccess: handleContactCreated,
+        onCancel: () => setShowCreateContact(false),
+      })
+    )
   );
 }
 
@@ -499,7 +449,7 @@ function renderSection(title: string, ...children: any[]) {
     { className: 'flex flex-col gap-3' },
     React.createElement(
       'h3',
-      { className: 'text-sm font-medium text-[var(--cg-text-muted)] uppercase tracking-wider' },
+      { className: 'text-sm font-medium text-cg-text-muted uppercase tracking-wider' },
       title
     ),
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -509,10 +459,10 @@ function renderSection(title: string, ...children: any[]) {
 
 function renderLabel(label: string, required = false) {
   return React.createElement(
-    'label',
-    { className: 'text-sm font-medium text-[var(--cg-text)]' },
+    UI.Label,
+    null,
     label,
-    required && React.createElement('span', { className: 'text-[var(--cg-danger)] ml-0.5' }, '*')
+    required && React.createElement('span', { className: 'text-cg-danger ml-0.5' }, '*')
   );
 }
 
@@ -529,13 +479,12 @@ function renderField(
     'div',
     { className: 'flex flex-col gap-1.5' },
     renderLabel(label, required),
-    React.createElement('input', {
+    React.createElement(UI.Input, {
       type,
       value: (data[key] as string) ?? '',
       onChange: (e: { target: { value: string } }) => onChange(key, e.target.value),
       placeholder,
       required,
-      className: inputClass,
       step: type === 'number' ? '0.1' : undefined,
     })
   );
@@ -554,15 +503,16 @@ function renderSelect(
     { className: 'flex flex-col gap-1.5' },
     renderLabel(label, required),
     React.createElement(
-      'select',
+      UI.Select,
       {
         value: (data[key] as string) ?? '',
-        onChange: (e: { target: { value: string } }) => onChange(key, e.target.value),
-        className: inputClass,
+        onValueChange: (v: string) => onChange(key, v),
+        placeholder: 'Seleccionar...',
+        clearable: !required,
+        debounceMs: 0,
       },
-      React.createElement('option', { value: '' }, `Seleccionar...`),
       options.map((opt) =>
-        React.createElement('option', { key: opt.value, value: opt.value }, opt.label)
+        React.createElement(UI.SelectItem, { key: opt.value, value: opt.value }, opt.label)
       )
     )
   );

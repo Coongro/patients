@@ -3,7 +3,7 @@
  */
 import { ContactDetail, ContactForm } from '@coongro/contacts';
 import type { Contact } from '@coongro/contacts';
-import { getHostReact, usePlugin } from '@coongro/plugin-sdk';
+import { getHostReact, getHostUI, usePlugin } from '@coongro/plugin-sdk';
 
 import { PetCard } from '../../components/PetCard.js';
 import { PetForm } from '../../components/PetForm.js';
@@ -13,7 +13,8 @@ import type { Pet } from '../../types/pet.js';
 import { formatReferral } from '../../utils/labels.js';
 
 const React = getHostReact();
-const { useState, useCallback, useEffect } = React;
+const UI = getHostUI();
+const { useState, useCallback } = React;
 
 export function OwnerDetailView(props: { contactId?: string }) {
   const { views } = usePlugin();
@@ -35,7 +36,6 @@ export function OwnerDetailView(props: { contactId?: string }) {
   const handleEditSuccess = useCallback(
     (_contact: Contact) => {
       setShowEditModal(false);
-      // Recargar la vista para ver datos actualizados
       views.open('patients.owner-detail.open', { contactId });
     },
     [views, contactId]
@@ -49,19 +49,6 @@ export function OwnerDetailView(props: { contactId?: string }) {
     [refreshPets]
   );
 
-  // Cerrar modales con ESC
-  useEffect(() => {
-    if (!showEditModal && !showAddPetModal) return;
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowEditModal(false);
-        setShowAddPetModal(false);
-      }
-    };
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
-  }, [showEditModal, showAddPetModal]);
-
   const handleNavigateToPet = useCallback(
     (pet: Pet) => {
       views.open('patients.detail.open', { petId: pet.id });
@@ -74,10 +61,10 @@ export function OwnerDetailView(props: { contactId?: string }) {
   }, []);
 
   if (!contactId) {
-    return (
-      <div className="p-6 text-center text-sm text-[var(--cg-text-muted)]">
-        No se especificó un dueño.
-      </div>
+    return React.createElement(
+      'div',
+      { className: 'p-6 text-center text-sm text-cg-text-muted' },
+      'No se especificó un dueño.'
     );
   }
 
@@ -110,11 +97,9 @@ export function OwnerDetailView(props: { contactId?: string }) {
           'div',
           { className: 'flex flex-col gap-3' },
           pets.length === 0
-            ? React.createElement(
-                'p',
-                { className: 'text-sm text-[var(--cg-text-muted)]' },
-                'Este dueño no tiene mascotas registradas'
-              )
+            ? React.createElement(UI.EmptyState, {
+                title: 'Este dueño no tiene mascotas registradas',
+              })
             : pets.map((pet) =>
                 React.createElement(PetCard, {
                   key: pet.id,
@@ -123,179 +108,76 @@ export function OwnerDetailView(props: { contactId?: string }) {
                 })
               ),
           React.createElement(
-            'button',
+            UI.Button,
             {
+              variant: 'outline',
               onClick: handleAddPet,
-              className:
-                'flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-dashed border-[var(--cg-border)] text-[var(--cg-text-muted)] hover:border-[var(--cg-accent)] hover:text-[var(--cg-accent)] transition-colors',
+              className: 'gap-2 border-dashed',
             },
-            React.createElement(
-              'svg',
-              {
-                width: 14,
-                height: 14,
-                viewBox: '0 0 24 24',
-                fill: 'none',
-                stroke: 'currentColor',
-                strokeWidth: 2,
-              },
-              React.createElement('path', { d: 'M12 5v14M5 12h14' })
-            ),
+            React.createElement(UI.DynamicIcon, { icon: 'Plus', size: 14 }),
             'Agregar nueva mascota'
           )
         ),
     },
   ].filter(Boolean) as Array<{ title: string; order: number; render: () => unknown }>;
 
-  return (
-    <div className="font-inter min-h-screen bg-[var(--cg-bg-secondary)] p-6">
-      <div className="max-w-3xl mx-auto flex flex-col gap-4">
-        {/* Botón volver */}
-        <button
-          onClick={handleBack}
-          className="flex items-center gap-1 text-sm text-[var(--cg-text-muted)] hover:text-[var(--cg-text)] transition-colors w-fit"
-        >
-          <svg
-            width={16}
-            height={16}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Volver
-        </button>
+  return React.createElement(
+    'div',
+    { className: 'font-inter min-h-screen bg-cg-bg-secondary p-6' },
+    React.createElement(
+      'div',
+      { className: 'max-w-3xl mx-auto flex flex-col gap-4' },
+      // Botón volver
+      React.createElement(
+        UI.Button,
+        {
+          variant: 'ghost',
+          onClick: handleBack,
+          className: 'gap-1 w-fit',
+        },
+        React.createElement(UI.DynamicIcon, { icon: 'ArrowLeft', size: 16 }),
+        'Volver'
+      ),
 
-        <ContactDetail contactId={contactId} extraSections={extraSections} onEdit={handleEdit} />
-      </div>
+      React.createElement(ContactDetail, {
+        contactId,
+        extraSections,
+        onEdit: handleEdit,
+      })
+    ),
 
-      {showEditModal &&
-        React.createElement(
-          'div',
-          {
-            className: 'fixed inset-0 z-[300] flex items-center justify-center',
-            onClick: (e: React.MouseEvent) => {
-              if (e.target === e.currentTarget) setShowEditModal(false);
-            },
-          },
-          React.createElement('div', {
-            className: 'absolute inset-0 bg-[var(--cg-bg-overlay)]',
-          }),
-          React.createElement(
-            'div',
-            {
-              className:
-                'relative w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-xl border border-[var(--cg-border)] bg-[var(--cg-bg)] shadow-xl animate-in fade-in-0 zoom-in-95',
-            },
-            React.createElement(
-              'div',
-              {
-                className:
-                  'flex items-center justify-between px-6 py-4 border-b border-[var(--cg-border)]',
-              },
-              React.createElement(
-                'h2',
-                { className: 'text-lg font-semibold text-[var(--cg-text)]' },
-                'Editar dueño'
-              ),
-              React.createElement(
-                'button',
-                {
-                  onClick: () => setShowEditModal(false),
-                  className:
-                    'p-1.5 rounded-md text-[var(--cg-text-muted)] hover:bg-[var(--cg-bg-hover)]',
-                },
-                React.createElement(
-                  'svg',
-                  {
-                    width: 18,
-                    height: 18,
-                    viewBox: '0 0 24 24',
-                    fill: 'none',
-                    stroke: 'currentColor',
-                    strokeWidth: 2,
-                  },
-                  React.createElement('path', { d: 'M18 6L6 18M6 6l12 12' })
-                )
-              )
-            ),
-            React.createElement(
-              'div',
-              { className: 'p-6' },
-              React.createElement(ContactForm, {
-                contactId,
-                hiddenFields: ['type'],
-                onSuccess: handleEditSuccess,
-                onCancel: () => setShowEditModal(false),
-              })
-            )
-          )
-        )}
+    // Modal editar dueño
+    React.createElement(
+      UI.FormDialog,
+      {
+        open: showEditModal,
+        onOpenChange: setShowEditModal,
+        title: 'Editar dueño',
+        size: 'md',
+      },
+      React.createElement(ContactForm, {
+        contactId,
+        hiddenFields: ['type'],
+        onSuccess: handleEditSuccess,
+        onCancel: () => setShowEditModal(false),
+      })
+    ),
 
-      {showAddPetModal &&
-        React.createElement(
-          'div',
-          {
-            className: 'fixed inset-0 z-[300] flex items-center justify-center',
-            onClick: (e: React.MouseEvent) => {
-              if (e.target === e.currentTarget) setShowAddPetModal(false);
-            },
-          },
-          React.createElement('div', {
-            className: 'absolute inset-0 bg-[var(--cg-bg-overlay)]',
-          }),
-          React.createElement(
-            'div',
-            {
-              className:
-                'relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl border border-[var(--cg-border)] bg-[var(--cg-bg)] shadow-xl animate-in fade-in-0 zoom-in-95',
-            },
-            React.createElement(
-              'div',
-              {
-                className:
-                  'flex items-center justify-between px-6 py-4 border-b border-[var(--cg-border)]',
-              },
-              React.createElement(
-                'h2',
-                { className: 'text-lg font-semibold text-[var(--cg-text)]' },
-                'Nueva mascota'
-              ),
-              React.createElement(
-                'button',
-                {
-                  onClick: () => setShowAddPetModal(false),
-                  className:
-                    'p-1.5 rounded-md text-[var(--cg-text-muted)] hover:bg-[var(--cg-bg-hover)]',
-                },
-                React.createElement(
-                  'svg',
-                  {
-                    width: 18,
-                    height: 18,
-                    viewBox: '0 0 24 24',
-                    fill: 'none',
-                    stroke: 'currentColor',
-                    strokeWidth: 2,
-                  },
-                  React.createElement('path', { d: 'M18 6L6 18M6 6l12 12' })
-                )
-              )
-            ),
-            React.createElement(
-              'div',
-              { className: 'p-6' },
-              React.createElement(PetForm, {
-                defaults: { owner_id: contactId },
-                onSuccess: handleAddPetSuccess,
-                onCancel: () => setShowAddPetModal(false),
-              })
-            )
-          )
-        )}
-    </div>
+    // Modal agregar mascota
+    React.createElement(
+      UI.FormDialog,
+      {
+        open: showAddPetModal,
+        onOpenChange: setShowAddPetModal,
+        title: 'Nueva mascota',
+        size: 'lg',
+      },
+      React.createElement(PetForm, {
+        defaults: { owner_id: contactId },
+        onSuccess: handleAddPetSuccess,
+        onCancel: () => setShowAddPetModal(false),
+      })
+    )
   );
 }
 
@@ -303,7 +185,7 @@ function renderField(label: string, value: string) {
   return React.createElement(
     'div',
     { className: 'flex flex-col gap-0.5' },
-    React.createElement('span', { className: 'text-xs text-[var(--cg-text-muted)]' }, label),
-    React.createElement('span', { className: 'text-sm text-[var(--cg-text)]' }, value)
+    React.createElement('span', { className: 'text-xs text-cg-text-muted' }, label),
+    React.createElement('span', { className: 'text-sm text-cg-text' }, value)
   );
 }

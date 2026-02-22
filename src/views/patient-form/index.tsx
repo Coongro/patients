@@ -35,17 +35,17 @@ export function PatientFormView(props: { petId?: string }) {
   }, [views, petId]);
 
   return (
-    <div className="font-inter min-h-screen bg-[var(--cg-bg-secondary)] p-6">
+    <div className="font-inter min-h-screen bg-cg-bg-secondary p-6">
       <div className="max-w-2xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[var(--cg-text)]">
+          <h1 className="text-2xl font-bold text-cg-text">
             {petId ? 'Editar paciente' : 'Nuevo paciente'}
           </h1>
-          <p className="text-sm text-[var(--cg-text-muted)] mt-1">
+          <p className="text-sm text-cg-text-muted mt-1">
             {petId ? 'Modificar datos del paciente' : 'Registrar una nueva mascota'}
           </p>
         </div>
-        <div className="bg-[var(--cg-bg)] rounded-xl border border-[var(--cg-border)] p-6 shadow-sm">
+        <div className="bg-cg-bg rounded-xl border border-cg-border p-6 shadow-sm">
           <PetForm petId={petId} onSuccess={handleSuccess} onCancel={handleCancel} />
         </div>
       </div>

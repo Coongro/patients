@@ -1,8 +1,8 @@
 /**
  * Tabla de mascotas con búsqueda, filtros por especie/estado y paginación.
- * Sigue el mismo patrón que ContactsTable.
+ * Usa componentes UI compartidos (Table, ButtonGroup, Input, etc.).
  */
-import { getHostReact } from '@coongro/plugin-sdk';
+import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
 import { usePatientsSettings } from '../hooks/usePatientsSettings.js';
 import { usePets } from '../hooks/usePets.js';
@@ -19,6 +19,7 @@ import {
 } from '../utils/labels.js';
 
 const React = getHostReact();
+const UI = getHostUI();
 const { useState, useCallback, useMemo } = React;
 
 type ColumnDef = {
@@ -59,12 +60,10 @@ const ALL_COLUMNS: ColumnDef[] = [
     header: 'Estado',
     render: (p) =>
       React.createElement(
-        'span',
+        UI.Badge,
         {
-          className:
-            p.status === 'active'
-              ? 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--cg-success-bg)] text-[var(--cg-success)]'
-              : 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--cg-bg-tertiary)] text-[var(--cg-text-muted)]',
+          variant: p.status === 'active' ? 'success-soft' : 'secondary',
+          size: 'sm',
         },
         formatStatus(p.status)
       ),
@@ -85,7 +84,7 @@ export function PetsTable(props: PetsTableProps) {
 
   const { settings: pSettings } = usePatientsSettings();
 
-  const { data, loading, error, setFilters, setSort, pagination, nextPage, prevPage, refetch } =
+  const { data, loading, error, setFilters, setSort, pagination, nextPage, prevPage, goToPage, refetch } =
     usePets({ ...initialFilters, pageSize });
 
   const [searchValue, setSearchValue] = useState('');
@@ -115,41 +114,45 @@ export function PetsTable(props: PetsTableProps) {
     [pSettings.enabledSpecies]
   );
 
-  const handleSearch = useCallback(
-    (e: { target: { value: string } }) => {
-      const value = e.target.value;
-      setSearchValue(value);
+  // Centraliza la actualización de filtros evitando duplicación
+  const applyFilters = useCallback(
+    (overrides: { query?: string; species?: string; status?: string }) => {
+      const merged = {
+        query: overrides.query ?? searchValue,
+        species: overrides.species ?? activeSpeciesFilter,
+        status: overrides.status ?? activeStatusFilter,
+      };
       setFilters({
-        query: value || undefined,
-        species: activeSpeciesFilter || undefined,
-        status: activeStatusFilter || undefined,
+        query: merged.query || undefined,
+        species: merged.species || undefined,
+        status: merged.status || undefined,
       });
     },
-    [setFilters, activeSpeciesFilter, activeStatusFilter]
+    [setFilters, searchValue, activeSpeciesFilter, activeStatusFilter]
+  );
+
+  const handleSearch = useCallback(
+    (e: { target: { value: string } }) => {
+      setSearchValue(e.target.value);
+      applyFilters({ query: e.target.value });
+    },
+    [applyFilters]
   );
 
   const handleSpeciesFilter = useCallback(
     (species: string) => {
       setActiveSpeciesFilter(species);
-      setFilters({
-        query: searchValue || undefined,
-        species: species || undefined,
-        status: activeStatusFilter || undefined,
-      });
+      applyFilters({ species });
     },
-    [setFilters, searchValue, activeStatusFilter]
+    [applyFilters]
   );
 
   const handleStatusFilter = useCallback(
     (status: string) => {
       setActiveStatusFilter(status);
-      setFilters({
-        query: searchValue || undefined,
-        species: activeSpeciesFilter || undefined,
-        status: status || undefined,
-      });
+      applyFilters({ status });
     },
-    [setFilters, searchValue, activeSpeciesFilter]
+    [applyFilters]
   );
 
   const handleSort = useCallback(
@@ -163,21 +166,20 @@ export function PetsTable(props: PetsTableProps) {
     [sortKey, sortDir, setSort]
   );
 
+  /** Retorna la dirección de sort para TableHead: undefined = no sortable, false = sortable sin orden */
+  function getSortDirection(colKey: string): 'asc' | 'desc' | false | undefined {
+    if (!SORTABLE_KEYS.has(colKey)) return undefined;
+    return sortKey === colKey ? (sortDir as 'asc' | 'desc') : false;
+  }
+
+  const totalColSpan = allColumns.length + (extraActions.length > 0 ? 1 : 0);
+
   if (error) {
-    return React.createElement(
-      'div',
-      { className: 'flex flex-col items-center justify-center py-12 gap-3' },
-      React.createElement('p', { className: 'text-sm text-[var(--cg-danger)]' }, error),
-      React.createElement(
-        'button',
-        {
-          onClick: () => refetch(),
-          className:
-            'px-4 py-2 text-sm rounded-lg bg-[var(--cg-accent)] text-[var(--cg-text-inverse)] hover:bg-[var(--cg-accent-hover)] transition-colors',
-        },
-        'Reintentar'
-      )
-    );
+    return React.createElement(UI.ErrorDisplay, {
+      title: 'Error',
+      message: error,
+      onRetry: () => refetch(),
+    });
   }
 
   return React.createElement(
@@ -188,31 +190,21 @@ export function PetsTable(props: PetsTableProps) {
     React.createElement(
       'div',
       { className: 'flex flex-col gap-3' },
-      // Búsqueda
+      // Búsqueda con icono
       React.createElement(
         'div',
         { className: 'relative flex-1' },
-        React.createElement(
-          'svg',
-          {
-            className: 'absolute left-3 top-1/2 -translate-y-1/2 text-[var(--cg-text-muted)]',
-            width: 16,
-            height: 16,
-            viewBox: '0 0 24 24',
-            fill: 'none',
-            stroke: 'currentColor',
-            strokeWidth: 2,
-          },
-          React.createElement('circle', { cx: 11, cy: 11, r: 8 }),
-          React.createElement('path', { d: 'M21 21l-4.35-4.35' })
-        ),
-        React.createElement('input', {
+        React.createElement(UI.DynamicIcon, {
+          icon: 'Search',
+          size: 16,
+          className: 'absolute left-3 top-1/2 -translate-y-1/2 text-cg-text-muted',
+        }),
+        React.createElement(UI.Input, {
           type: 'text',
           placeholder: 'Buscar por nombre, raza, microchip...',
           value: searchValue,
           onChange: handleSearch,
-          className:
-            'w-full h-9 pl-10 pr-4 text-sm rounded-lg border border-[var(--cg-input-border)] bg-[var(--cg-input-bg)] text-[var(--cg-text)] placeholder:text-[var(--cg-input-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--cg-border-focus)]',
+          className: 'pl-10',
         })
       ),
       // Filtros de especie y estado
@@ -220,38 +212,30 @@ export function PetsTable(props: PetsTableProps) {
         'div',
         { className: 'flex items-center gap-4' },
         React.createElement(
-          'div',
-          { className: 'flex gap-1' },
+          UI.ButtonGroup,
+          null,
           speciesFilterOptions.map((sp) =>
             React.createElement(
-              'button',
+              UI.ButtonGroupItem,
               {
                 key: sp,
+                active: activeSpeciesFilter === sp,
                 onClick: () => handleSpeciesFilter(sp),
-                className: `px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                  activeSpeciesFilter === sp
-                    ? 'bg-[var(--cg-accent)] text-[var(--cg-text-inverse)]'
-                    : 'bg-[var(--cg-bg-secondary)] text-[var(--cg-text-muted)] hover:bg-[var(--cg-bg-tertiary)]'
-                }`,
               },
               sp === '' ? 'Todos' : formatSpecies(sp)
             )
           )
         ),
         React.createElement(
-          'div',
-          { className: 'flex gap-1' },
+          UI.ButtonGroup,
+          null,
           ['', 'active', 'deceased', 'referred', 'lost'].map((st) =>
             React.createElement(
-              'button',
+              UI.ButtonGroupItem,
               {
                 key: st,
+                active: activeStatusFilter === st,
                 onClick: () => handleStatusFilter(st),
-                className: `px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                  activeStatusFilter === st
-                    ? 'bg-[var(--cg-accent)] text-[var(--cg-text-inverse)]'
-                    : 'bg-[var(--cg-bg-secondary)] text-[var(--cg-text-muted)] hover:bg-[var(--cg-bg-tertiary)]'
-                }`,
               },
               st === '' ? 'Todos' : formatStatus(st)
             )
@@ -262,136 +246,111 @@ export function PetsTable(props: PetsTableProps) {
 
     // Tabla
     React.createElement(
-      'div',
-      { className: 'overflow-x-auto rounded-lg border border-[var(--cg-border)]' },
+      UI.Table,
+      null,
+      // Header
       React.createElement(
-        'table',
-        { className: 'w-full' },
+        UI.TableHeader,
+        null,
         React.createElement(
-          'thead',
+          UI.TableRow,
           null,
-          React.createElement(
-            'tr',
-            { className: 'bg-[var(--cg-bg-secondary)] border-b border-[var(--cg-border)]' },
-            allColumns.map((col) => {
-              const isSortable = SORTABLE_KEYS.has(col.key);
-              const isActive = sortKey === col.key;
-              const arrow = isActive ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
-              return React.createElement(
-                'th',
-                {
-                  key: col.key,
-                  onClick: isSortable ? () => handleSort(col.key) : undefined,
-                  className: `text-left p-3 text-xs font-medium uppercase tracking-wider ${
-                    isSortable ? 'cursor-pointer select-none hover:text-[var(--cg-text)]' : ''
-                  } ${isActive ? 'text-[var(--cg-text)]' : 'text-[var(--cg-text-muted)]'} ${col.className ?? ''}`,
-                },
-                col.header + arrow
-              );
-            }),
-            extraActions.length > 0 &&
-              React.createElement(
-                'th',
-                {
-                  className:
-                    'w-24 p-3 text-right text-xs font-medium uppercase tracking-wider text-[var(--cg-text-muted)]',
-                },
-                'Acciones'
-              )
-          )
-        ),
-        React.createElement(
-          'tbody',
-          null,
-          loading
-            ? Array.from({ length: 5 }).map((_, i) =>
-                React.createElement(
-                  'tr',
-                  { key: `skeleton-${i}`, className: 'border-b border-[var(--cg-border)]' },
-                  Array.from({
-                    length: allColumns.length + (extraActions.length > 0 ? 1 : 0),
-                  }).map((_, j) =>
-                    React.createElement(
-                      'td',
-                      { key: j, className: 'p-3' },
-                      React.createElement('div', {
-                        className: 'h-4 rounded bg-[var(--cg-skeleton)] animate-pulse',
-                        style: { width: `${60 + Math.random() * 40}%` },
-                      })
-                    )
-                  )
-                )
-              )
-            : data.length === 0
-              ? React.createElement(
-                  'tr',
-                  null,
-                  React.createElement(
-                    'td',
-                    {
-                      colSpan: allColumns.length + (extraActions.length > 0 ? 1 : 0),
-                      className: 'p-12 text-center text-sm text-[var(--cg-text-muted)]',
-                    },
-                    emptyMessage
-                  )
-                )
-              : data.map((pet) =>
-                  React.createElement(
-                    'tr',
-                    {
-                      key: pet.id,
-                      onClick: () => onRowClick?.(pet),
-                      className: `border-b border-[var(--cg-border)] transition-colors ${
-                        onRowClick ? 'cursor-pointer hover:bg-[var(--cg-bg-hover)]' : ''
-                      }`,
-                    },
-                    allColumns.map((col) =>
-                      React.createElement(
-                        'td',
-                        {
-                          key: col.key,
-                          className: `p-3 text-sm text-[var(--cg-text)] ${col.className ?? ''}`,
-                        },
-                        col.render
-                          ? (col.render(pet) as React.ReactNode)
-                          : (((pet as unknown as Record<string, unknown>)[
-                              col.key
-                            ] as React.ReactNode) ?? '—')
-                      )
-                    ),
-                    extraActions.length > 0 &&
-                      React.createElement(
-                        'td',
-                        {
-                          className: 'p-3 text-right',
-                          onClick: (e: { stopPropagation: () => void }) => e.stopPropagation(),
-                        },
-                        React.createElement(
-                          'div',
-                          { className: 'flex items-center justify-end gap-1' },
-                          extraActions
-                            .filter((a) => !a.hidden || !a.hidden(pet))
-                            .map((action, i) =>
-                              React.createElement(
-                                'button',
-                                {
-                                  key: i,
-                                  onClick: () => action.onClick(pet),
-                                  title: action.label,
-                                  className: `p-1.5 rounded-md text-xs transition-colors ${
-                                    action.variant === 'destructive'
-                                      ? 'text-[var(--cg-danger)] hover:bg-[var(--cg-danger-bg)]'
-                                      : 'text-[var(--cg-text-muted)] hover:bg-[var(--cg-bg-hover)]'
-                                  }`,
-                                },
-                                action.label
-                              )
-                            )
-                        )
-                      )
-                  )
-                )
+          allColumns.map((col) =>
+            React.createElement(
+              UI.TableHead,
+              {
+                key: col.key,
+                sortDirection: getSortDirection(col.key),
+                onSort: () => handleSort(col.key),
+                className: col.className,
+              },
+              col.header
+            )
+          ),
+          extraActions.length > 0 &&
+            React.createElement(
+              UI.TableHead,
+              { className: 'w-24 text-right' },
+              'Acciones'
+            )
         )
+      ),
+      // Body
+      React.createElement(
+        UI.TableBody,
+        null,
+        loading
+          ? Array.from({ length: 5 }).map((_, i) =>
+              React.createElement(
+                UI.TableRow,
+                { key: `skeleton-${i}` },
+                Array.from({ length: totalColSpan }).map((_, j) =>
+                  React.createElement(
+                    UI.TableCell,
+                    { key: j },
+                    React.createElement(UI.Skeleton, { className: 'h-4' })
+                  )
+                )
+              )
+            )
+          : data.length === 0
+            ? React.createElement(
+                UI.TableRow,
+                null,
+                React.createElement(
+                  UI.TableCell,
+                  { colSpan: totalColSpan, className: 'p-0' },
+                  React.createElement(UI.EmptyState, { title: emptyMessage })
+                )
+              )
+            : data.map((pet) =>
+                React.createElement(
+                  UI.TableRow,
+                  {
+                    key: pet.id,
+                    onClick: onRowClick ? () => onRowClick(pet) : undefined,
+                    className: onRowClick ? 'cursor-pointer' : '',
+                  },
+                  allColumns.map((col) =>
+                    React.createElement(
+                      UI.TableCell,
+                      { key: col.key, className: col.className },
+                      col.render
+                        ? (col.render(pet) as React.ReactNode)
+                        : (((pet as unknown as Record<string, unknown>)[
+                            col.key
+                          ] as React.ReactNode) ?? '—')
+                    )
+                  ),
+                  extraActions.length > 0 &&
+                    React.createElement(
+                      UI.TableCell,
+                      {
+                        className: 'text-right',
+                        onClick: (e: { stopPropagation: () => void }) => e.stopPropagation(),
+                      },
+                      React.createElement(
+                        'div',
+                        { className: 'flex items-center justify-end gap-1' },
+                        extraActions
+                          .filter((a) => !a.hidden || !a.hidden(pet))
+                          .map((action, i) =>
+                            React.createElement(
+                              UI.Button,
+                              {
+                                key: i,
+                                variant: action.variant === 'destructive' ? 'destructive' : 'ghost',
+                                size: 'xs',
+                                onClick: () => action.onClick(pet),
+                                title: action.label,
+                              },
+                              action.label
+                            )
+                          )
+                      )
+                    )
+                )
+              )
       )
     ),
 
@@ -400,36 +359,55 @@ export function PetsTable(props: PetsTableProps) {
       data.length > 0 &&
       React.createElement(
         'div',
-        { className: 'flex items-center justify-between text-sm text-[var(--cg-text-muted)]' },
+        { className: 'flex items-center justify-between text-sm text-cg-text-muted' },
         React.createElement(
           'span',
           null,
           `${(pagination.page - 1) * pagination.pageSize + 1}–${Math.min(pagination.page * pagination.pageSize, pagination.total)} de ${pagination.total}`
         ),
         React.createElement(
-          'div',
-          { className: 'flex gap-2' },
+          UI.Pagination,
+          null,
           React.createElement(
-            'button',
-            {
-              onClick: prevPage,
-              disabled: pagination.page <= 1,
-              className:
-                'px-3 py-1.5 text-xs rounded-lg border border-[var(--cg-border)] hover:bg-[var(--cg-bg-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors',
-            },
-            'Anterior'
-          ),
-          React.createElement(
-            'button',
-            {
-              onClick: nextPage,
-              disabled: pagination.page >= pagination.totalPages,
-              className:
-                'px-3 py-1.5 text-xs rounded-lg border border-[var(--cg-border)] hover:bg-[var(--cg-bg-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors',
-            },
-            'Siguiente'
+            UI.PaginationContent,
+            null,
+            React.createElement(UI.PaginationItem, null,
+              React.createElement(UI.PaginationPrevious, {
+                onClick: prevPage,
+                disabled: pagination.page <= 1,
+              })
+            ),
+            ...buildPageNumbers(pagination.page, pagination.totalPages).map((item, i) =>
+              React.createElement(UI.PaginationItem, { key: i },
+                item === '...'
+                  ? React.createElement(UI.PaginationEllipsis)
+                  : React.createElement(UI.PaginationLink, {
+                      isActive: item === pagination.page,
+                      onClick: () => goToPage(item as number),
+                    }, item)
+              )
+            ),
+            React.createElement(UI.PaginationItem, null,
+              React.createElement(UI.PaginationNext, {
+                onClick: nextPage,
+                disabled: pagination.page >= pagination.totalPages,
+              })
+            )
           )
         )
       )
   );
+}
+
+/** Genera lista de números de página con elipsis para la paginación */
+function buildPageNumbers(current: number, total: number): Array<number | '...'> {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: Array<number | '...'> = [1];
+  if (current > 3) pages.push('...');
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (current < total - 2) pages.push('...');
+  pages.push(total);
+  return pages;
 }

@@ -29,26 +29,24 @@ export function PatientsListView() {
   );
 
   return (
-    <div className="font-inter min-h-screen bg-[var(--cg-bg-secondary)] p-6">
+    <div className="font-inter min-h-screen bg-cg-bg-secondary p-6">
       <div className="max-w-6xl mx-auto flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[var(--cg-text)]">Pacientes</h1>
-            <p className="text-sm text-[var(--cg-text-muted)] mt-1">
+            <h1 className="text-2xl font-bold text-cg-text">Pacientes</h1>
+            <p className="text-sm text-cg-text-muted mt-1">
               Gestión de mascotas y pacientes veterinarios
             </p>
           </div>
-          <div className="w-64">
-            <CreatePetButton onSuccess={handleCreated} />
-          </div>
+          <CreatePetButton onSuccess={handleCreated} />
         </div>
 
         {/* Stats */}
         <PetStats layout="row" />
 
         {/* Tabla */}
-        <div className="bg-[var(--cg-bg)] rounded-xl border border-[var(--cg-border)] p-6 shadow-sm">
+        <div className="bg-cg-bg rounded-xl border border-cg-border p-6 shadow-sm">
           <PetsTable
             pageSize={20}
             onRowClick={handleRowClick}

@@ -3,7 +3,7 @@
  * Usa ContactCard de @coongro/contacts para la sección del dueño.
  */
 import { ContactCard } from '@coongro/contacts';
-import { getHostReact } from '@coongro/plugin-sdk';
+import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
 import { usePet } from '../hooks/usePet.js';
 import { usePetsByOwner } from '../hooks/usePetsByOwner.js';
@@ -18,8 +18,10 @@ import {
   formatReferral,
   SPECIES_EMOJI,
 } from '../utils/labels.js';
+import { PetCard } from './PetCard.js';
 
 const React = getHostReact();
+const UI = getHostUI();
 
 export function PetDetail(props: PetDetailProps) {
   const {
@@ -47,48 +49,29 @@ export function PetDetail(props: PetDetailProps) {
       React.createElement(
         'div',
         { className: 'flex items-center gap-4' },
-        React.createElement('div', {
-          className: 'w-16 h-16 rounded-full bg-[var(--cg-skeleton)] animate-pulse',
-        }),
+        React.createElement(UI.Skeleton, { className: 'w-16 h-16 rounded-full' }),
         React.createElement(
           'div',
           { className: 'flex flex-col gap-2' },
-          React.createElement('div', {
-            className: 'h-6 w-48 rounded bg-[var(--cg-skeleton)] animate-pulse',
-          }),
-          React.createElement('div', {
-            className: 'h-4 w-24 rounded bg-[var(--cg-skeleton)] animate-pulse',
-          })
+          React.createElement(UI.Skeleton, { className: 'h-6 w-48' }),
+          React.createElement(UI.Skeleton, { className: 'h-4 w-24' })
         )
       ),
       Array.from({ length: 4 }).map((_, i) =>
-        React.createElement('div', {
+        React.createElement(UI.Skeleton, {
           key: i,
-          className: 'h-10 rounded-lg bg-[var(--cg-skeleton)] animate-pulse',
+          className: 'h-10 rounded-lg',
         })
       )
     );
   }
 
   if (error || !pet) {
-    return React.createElement(
-      'div',
-      { className: 'flex flex-col items-center py-12 gap-3' },
-      React.createElement(
-        'p',
-        { className: 'text-sm text-[var(--cg-text-muted)]' },
-        error ?? 'Paciente no encontrado'
-      ),
-      React.createElement(
-        'button',
-        {
-          onClick: refetch,
-          className:
-            'px-4 py-2 text-sm rounded-lg bg-[var(--cg-accent)] text-[var(--cg-text-inverse)]',
-        },
-        'Reintentar'
-      )
-    );
+    return React.createElement(UI.ErrorDisplay, {
+      title: 'Error',
+      message: error ?? 'Paciente no encontrado',
+      onRetry: refetch,
+    });
   }
 
   const emoji = SPECIES_EMOJI[pet.species] ?? '🐾';
@@ -120,24 +103,13 @@ export function PetDetail(props: PetDetailProps) {
       { className: 'flex items-center justify-between' },
       onBack &&
         React.createElement(
-          'button',
+          UI.Button,
           {
+            variant: 'ghost',
             onClick: onBack,
-            className:
-              'flex items-center gap-1 text-sm text-[var(--cg-text-muted)] hover:text-[var(--cg-text)] transition-colors',
+            className: 'gap-1',
           },
-          React.createElement(
-            'svg',
-            {
-              width: 16,
-              height: 16,
-              viewBox: '0 0 24 24',
-              fill: 'none',
-              stroke: 'currentColor',
-              strokeWidth: 2,
-            },
-            React.createElement('path', { d: 'M19 12H5M12 19l-7-7 7-7' })
-          ),
+          React.createElement(UI.DynamicIcon, { icon: 'ArrowLeft', size: 16 }),
           'Volver'
         ),
       React.createElement(
@@ -145,32 +117,29 @@ export function PetDetail(props: PetDetailProps) {
         { className: 'flex gap-2' },
         onEdit &&
           React.createElement(
-            'button',
+            UI.Button,
             {
+              variant: 'outline',
               onClick: () => onEdit(pet),
-              className:
-                'px-4 py-2 text-sm rounded-lg border border-[var(--cg-border)] text-[var(--cg-text)] hover:bg-[var(--cg-bg-hover)] transition-colors',
             },
             'Editar'
           ),
         onDelete &&
           React.createElement(
-            'button',
+            UI.Button,
             {
+              variant: 'destructive',
               onClick: () => onDelete(pet),
-              className:
-                'px-4 py-2 text-sm rounded-lg text-[var(--cg-danger)] border border-[var(--cg-danger)] hover:bg-[var(--cg-danger-bg)] transition-colors',
             },
             'Eliminar'
           ),
         extraActions.map((action, i) =>
           React.createElement(
-            'button',
+            UI.Button,
             {
               key: i,
+              variant: 'outline',
               onClick: () => action.onClick(pet),
-              className:
-                'px-4 py-2 text-sm rounded-lg border border-[var(--cg-border)] text-[var(--cg-text)] hover:bg-[var(--cg-bg-hover)] transition-colors',
             },
             action.label
           )
@@ -182,47 +151,41 @@ export function PetDetail(props: PetDetailProps) {
     React.createElement(
       'div',
       { className: 'flex items-center gap-4' },
-      React.createElement(
-        'div',
-        {
-          className:
-            'flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-3xl flex-shrink-0',
-        },
-        emoji
-      ),
+      React.createElement(UI.Avatar, {
+        size: 'lg',
+        icon: React.createElement('span', null, emoji),
+        className: 'bg-emerald-100',
+      }),
       React.createElement(
         'div',
         { className: 'flex flex-col flex-1 min-w-0' },
         React.createElement(
           'h2',
-          { className: 'text-xl font-semibold text-[var(--cg-text)] truncate' },
+          { className: 'text-xl font-semibold text-cg-text truncate' },
           `${pet.name} — ${pet.breed || formatSpecies(pet.species)}`
         ),
         React.createElement(
           'div',
           { className: 'flex items-center gap-2 mt-1 flex-wrap' },
           age &&
-            React.createElement('span', { className: 'text-sm text-[var(--cg-text-muted)]' }, age),
+            React.createElement('span', { className: 'text-sm text-cg-text-muted' }, age),
           formatSex(pet.sex) &&
             React.createElement(
               'span',
-              { className: 'text-sm text-[var(--cg-text-muted)]' },
+              { className: 'text-sm text-cg-text-muted' },
               `· ${formatSex(pet.sex)}`
             ),
           pet.weight_kg &&
             React.createElement(
               'span',
-              { className: 'text-sm text-[var(--cg-text-muted)]' },
+              { className: 'text-sm text-cg-text-muted' },
               `· ${pet.weight_kg} kg`
             ),
           React.createElement(
-            'span',
+            UI.Badge,
             {
-              className: `inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
-                pet.status === 'active'
-                  ? 'bg-[var(--cg-success-bg)] text-[var(--cg-success)]'
-                  : 'bg-[var(--cg-bg-tertiary)] text-[var(--cg-text-muted)]'
-              }`,
+              variant: pet.status === 'active' ? 'success-soft' : 'secondary',
+              size: 'sm',
             },
             formatStatus(pet.status)
           )
@@ -233,9 +196,9 @@ export function PetDetail(props: PetDetailProps) {
     // Alertas médicas
     hasAlerts &&
       React.createElement(
-        'div',
+        UI.Card,
         {
-          className: 'rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-start gap-3',
+          className: 'p-4 border-cg-warning-border bg-cg-warning-bg flex items-start gap-3',
         },
         React.createElement('span', { className: 'text-lg' }, '⚠️'),
         React.createElement(
@@ -243,21 +206,21 @@ export function PetDetail(props: PetDetailProps) {
           { className: 'flex flex-col gap-1' },
           React.createElement(
             'span',
-            { className: 'text-sm font-medium text-amber-800' },
+            { className: 'text-sm font-medium text-cg-warning-text' },
             'Alertas médicas'
           ),
           pet.allergies &&
             pet.allergies.length > 0 &&
             React.createElement(
               'span',
-              { className: 'text-sm text-amber-700' },
+              { className: 'text-sm text-cg-warning-text/80' },
               `Alergias: ${pet.allergies.join(', ')}`
             ),
           pet.chronic_conditions &&
             pet.chronic_conditions.length > 0 &&
             React.createElement(
               'span',
-              { className: 'text-sm text-amber-700' },
+              { className: 'text-sm text-cg-warning-text/80' },
               `Condiciones: ${pet.chronic_conditions.join(', ')}`
             )
         )
@@ -265,13 +228,9 @@ export function PetDetail(props: PetDetailProps) {
 
     // Info básica
     React.createElement(
-      'div',
-      { className: 'rounded-xl border border-[var(--cg-border)] bg-[var(--cg-bg)] p-4' },
-      React.createElement(
-        'h3',
-        { className: 'text-sm font-medium text-[var(--cg-text-muted)] mb-3' },
-        'Información'
-      ),
+      UI.Card,
+      { className: 'p-4' },
+      sectionTitle('Información'),
       React.createElement(
         'div',
         { className: 'grid grid-cols-2 gap-3' },
@@ -281,10 +240,10 @@ export function PetDetail(props: PetDetailProps) {
             { key: field.label, className: 'flex flex-col gap-0.5' },
             React.createElement(
               'span',
-              { className: 'text-xs text-[var(--cg-text-muted)]' },
+              { className: 'text-xs text-cg-text-muted' },
               field.label
             ),
-            React.createElement('span', { className: 'text-sm text-[var(--cg-text)]' }, field.value)
+            React.createElement('span', { className: 'text-sm text-cg-text' }, field.value)
           )
         )
       )
@@ -292,13 +251,9 @@ export function PetDetail(props: PetDetailProps) {
 
     // Sección dueño (usando ContactCard de contacts)
     React.createElement(
-      'div',
-      { className: 'rounded-xl border border-[var(--cg-border)] bg-[var(--cg-bg)] p-4' },
-      React.createElement(
-        'h3',
-        { className: 'text-sm font-medium text-[var(--cg-text-muted)] mb-3' },
-        'Dueño'
-      ),
+      UI.Card,
+      { className: 'p-4' },
+      sectionTitle('Dueño'),
       React.createElement(ContactCard, {
         contactId: pet.owner_id,
         showFields: ['phone', 'email', 'address'],
@@ -309,19 +264,19 @@ export function PetDetail(props: PetDetailProps) {
               vetOwner.emergency_phone &&
                 React.createElement(
                   'span',
-                  { className: 'text-[var(--cg-text)]' },
+                  { className: 'text-cg-text' },
                   `Emergencia: ${vetOwner.emergency_phone}`
                 ),
               vetOwner.preferred_vet &&
                 React.createElement(
                   'span',
-                  { className: 'text-[var(--cg-text)]' },
+                  { className: 'text-cg-text' },
                   `Vet preferido: ${vetOwner.preferred_vet}`
                 ),
               vetOwner.referral_source &&
                 React.createElement(
                   'span',
-                  { className: 'text-[var(--cg-text)]' },
+                  { className: 'text-cg-text' },
                   `Llegó por: ${formatReferral(vetOwner.referral_source)}`
                 )
             )
@@ -335,37 +290,20 @@ export function PetDetail(props: PetDetailProps) {
     // Otras mascotas del dueño
     otherPets.length > 0 &&
       React.createElement(
-        'div',
-        { className: 'rounded-xl border border-[var(--cg-border)] bg-[var(--cg-bg)] p-4' },
-        React.createElement(
-          'h3',
-          { className: 'text-sm font-medium text-[var(--cg-text-muted)] mb-3' },
-          'Otras mascotas del dueño'
-        ),
+        UI.Card,
+        { className: 'p-4' },
+        sectionTitle('Otras mascotas del dueño'),
         React.createElement(
           'div',
           { className: 'flex flex-col gap-2' },
           otherPets.map((sibling) =>
-            React.createElement(
-              'div',
-              {
-                key: sibling.id,
-                className:
-                  'flex items-center gap-2 p-2 rounded-lg hover:bg-[var(--cg-bg-hover)] cursor-pointer transition-colors',
-                onClick: () => onNavigate?.('patients.detail.open', { petId: sibling.id }),
-              },
-              React.createElement('span', null, SPECIES_EMOJI[sibling.species] ?? '🐾'),
-              React.createElement(
-                'span',
-                { className: 'text-sm text-[var(--cg-text)]' },
-                sibling.name
-              ),
-              React.createElement(
-                'span',
-                { className: 'text-xs text-[var(--cg-text-muted)]' },
-                `${sibling.breed || formatSpecies(sibling.species)}, ${calculateAge(sibling.birth_date) || '?'}`
-              )
-            )
+            React.createElement(PetCard, {
+              key: sibling.id,
+              pet: sibling,
+              onClick: onNavigate
+                ? () => onNavigate('patients.detail.open', { petId: sibling.id })
+                : undefined,
+            })
           )
         )
       ),
@@ -373,16 +311,12 @@ export function PetDetail(props: PetDetailProps) {
     // Notas
     pet.notes &&
       React.createElement(
-        'div',
-        { className: 'rounded-xl border border-[var(--cg-border)] bg-[var(--cg-bg)] p-4' },
-        React.createElement(
-          'h3',
-          { className: 'text-sm font-medium text-[var(--cg-text-muted)] mb-3' },
-          'Notas'
-        ),
+        UI.Card,
+        { className: 'p-4' },
+        sectionTitle('Notas'),
         React.createElement(
           'p',
-          { className: 'text-sm text-[var(--cg-text)] whitespace-pre-wrap' },
+          { className: 'text-sm text-cg-text whitespace-pre-wrap' },
           pet.notes
         )
       ),
@@ -390,48 +324,17 @@ export function PetDetail(props: PetDetailProps) {
     // Secciones extra del bloque
     sortedSections.map((section, i) =>
       React.createElement(
-        'div',
-        {
-          key: i,
-          className: 'rounded-xl border border-[var(--cg-border)] bg-[var(--cg-bg)] p-4',
-        },
-        React.createElement(
-          'h3',
-          { className: 'text-sm font-medium text-[var(--cg-text-muted)] mb-3' },
-          section.title
-        ),
+        UI.Card,
+        { key: i, className: 'p-4' },
+        sectionTitle(section.title),
         section.render() as React.ReactNode
-      )
-    ),
-
-    // Botones de acción futura (placeholder)
-    React.createElement(
-      'div',
-      { className: 'flex gap-2' },
-      React.createElement(
-        'button',
-        {
-          disabled: true,
-          className:
-            'px-4 py-2 text-sm rounded-lg border border-[var(--cg-border)] text-[var(--cg-text-muted)] opacity-50 cursor-not-allowed',
-        },
-        'Nueva Consulta'
-      ),
-      React.createElement(
-        'button',
-        {
-          disabled: true,
-          className:
-            'px-4 py-2 text-sm rounded-lg border border-[var(--cg-border)] text-[var(--cg-text-muted)] opacity-50 cursor-not-allowed',
-        },
-        'Nuevo Turno'
       )
     ),
 
     // Metadata
     React.createElement(
       'div',
-      { className: 'text-xs text-[var(--cg-text-subtle)] flex gap-4' },
+      { className: 'text-xs text-cg-text-subtle flex gap-4' },
       React.createElement('span', null, `Creado: ${new Date(pet.created_at).toLocaleDateString()}`),
       React.createElement(
         'span',
@@ -439,5 +342,14 @@ export function PetDetail(props: PetDetailProps) {
         `Actualizado: ${new Date(pet.updated_at).toLocaleDateString()}`
       )
     )
+  );
+}
+
+/** Renderiza el título de sección usado en cada Card */
+function sectionTitle(text: string) {
+  return React.createElement(
+    'h3',
+    { className: 'text-sm font-medium text-cg-text-muted mb-3' },
+    text
   );
 }
