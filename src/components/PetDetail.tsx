@@ -18,6 +18,7 @@ import {
   formatReferral,
   SPECIES_EMOJI,
 } from '../utils/labels.js';
+
 import { PetCard } from './PetCard.js';
 
 const React = getHostReact();
@@ -167,8 +168,7 @@ export function PetDetail(props: PetDetailProps) {
         React.createElement(
           'div',
           { className: 'flex items-center gap-2 mt-1 flex-wrap' },
-          age &&
-            React.createElement('span', { className: 'text-sm text-cg-text-muted' }, age),
+          age && React.createElement('span', { className: 'text-sm text-cg-text-muted' }, age),
           formatSex(pet.sex) &&
             React.createElement(
               'span',
@@ -238,11 +238,7 @@ export function PetDetail(props: PetDetailProps) {
           React.createElement(
             'div',
             { key: field.label, className: 'flex flex-col gap-0.5' },
-            React.createElement(
-              'span',
-              { className: 'text-xs text-cg-text-muted' },
-              field.label
-            ),
+            React.createElement('span', { className: 'text-xs text-cg-text-muted' }, field.label),
             React.createElement('span', { className: 'text-sm text-cg-text' }, field.value)
           )
         )

@@ -84,8 +84,18 @@ export function PetsTable(props: PetsTableProps) {
 
   const { settings: pSettings } = usePatientsSettings();
 
-  const { data, loading, error, setFilters, setSort, pagination, nextPage, prevPage, goToPage, refetch } =
-    usePets({ ...initialFilters, pageSize });
+  const {
+    data,
+    loading,
+    error,
+    setFilters,
+    setSort,
+    pagination,
+    nextPage,
+    prevPage,
+    goToPage,
+    refetch,
+  } = usePets({ ...initialFilters, pageSize });
 
   const [searchValue, setSearchValue] = useState('');
   const [activeSpeciesFilter, setActiveSpeciesFilter] = useState<string>(
@@ -268,11 +278,7 @@ export function PetsTable(props: PetsTableProps) {
             )
           ),
           extraActions.length > 0 &&
-            React.createElement(
-              UI.TableHead,
-              { className: 'w-24 text-right' },
-              'Acciones'
-            )
+            React.createElement(UI.TableHead, { className: 'w-24 text-right' }, 'Acciones')
         )
       ),
       // Body
@@ -371,23 +377,33 @@ export function PetsTable(props: PetsTableProps) {
           React.createElement(
             UI.PaginationContent,
             null,
-            React.createElement(UI.PaginationItem, null,
+            React.createElement(
+              UI.PaginationItem,
+              null,
               React.createElement(UI.PaginationPrevious, {
                 onClick: prevPage,
                 disabled: pagination.page <= 1,
               })
             ),
             ...buildPageNumbers(pagination.page, pagination.totalPages).map((item, i) =>
-              React.createElement(UI.PaginationItem, { key: i },
+              React.createElement(
+                UI.PaginationItem,
+                { key: i },
                 item === '...'
                   ? React.createElement(UI.PaginationEllipsis)
-                  : React.createElement(UI.PaginationLink, {
-                      isActive: item === pagination.page,
-                      onClick: () => goToPage(item as number),
-                    }, item)
+                  : React.createElement(
+                      UI.PaginationLink,
+                      {
+                        isActive: item === pagination.page,
+                        onClick: () => goToPage(item),
+                      },
+                      item
+                    )
               )
             ),
-            React.createElement(UI.PaginationItem, null,
+            React.createElement(
+              UI.PaginationItem,
+              null,
               React.createElement(UI.PaginationNext, {
                 onClick: nextPage,
                 disabled: pagination.page >= pagination.totalPages,

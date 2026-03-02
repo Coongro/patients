@@ -22,12 +22,9 @@ export function PatientDetailView(props: { petId?: string }) {
     views.open('patients.list.open');
   }, [views]);
 
-  const handleEdit = useCallback(
-    (_pet: Pet) => {
-      setShowEditModal(true);
-    },
-    []
-  );
+  const handleEdit = useCallback((_pet: Pet) => {
+    setShowEditModal(true);
+  }, []);
 
   const handleEditSuccess = useCallback(() => {
     setShowEditModal(false);
