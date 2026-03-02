@@ -52,9 +52,7 @@ export function OwnersListView() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-cg-text">Dueños</h1>
-            <p className="text-sm text-cg-text-muted mt-1">
-              Contactos que son dueños de mascotas
-            </p>
+            <p className="text-sm text-cg-text-muted mt-1">Contactos que son dueños de mascotas</p>
           </div>
           <div className="w-48">
             <CreateContactButton

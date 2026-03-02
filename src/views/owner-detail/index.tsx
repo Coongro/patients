@@ -44,7 +44,7 @@ export function OwnerDetailView(props: { contactId?: string }) {
   const handleAddPetSuccess = useCallback(
     (_pet: Pet) => {
       setShowAddPetModal(false);
-      refreshPets();
+      void refreshPets();
     },
     [refreshPets]
   );
