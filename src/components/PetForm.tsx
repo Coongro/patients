@@ -253,172 +253,180 @@ export function PetForm(props: PetFormProps) {
     null,
 
     React.createElement(
-    'form',
-    { onSubmit: handleSubmit, className: `flex flex-col gap-6 ${className}` },
+      'form',
+      { onSubmit: handleSubmit, className: `flex flex-col gap-6 ${className}` },
 
-    // Sección 1: Dueño
-    renderSection(
-      'Dueño',
-      React.createElement(
-        'div',
-        { className: 'flex flex-col gap-1.5' },
-        renderLabel('Dueño', true),
-        React.createElement(ContactPicker, {
-          placeholder: 'Buscar dueño...',
-          value: (formData.owner_id as string) ?? null,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          onChange: (c: { id?: string } | null) => handleChange('owner_id', c?.id ?? null),
-          allowCreate: true,
-          onCreateClick: handleCreateContactClick,
-          filters: { type: 'person' },
-        })
-      )
-    ),
-
-    // Sección 2: Datos de la mascota
-    renderSection(
-      'Datos de la mascota',
-      renderField('Nombre', 'name', 'text', formData, handleChange, true, 'Nombre de la mascota'),
-      renderSelect('Especie', 'species', speciesOptions, formData, handleChange, true),
-      renderField('Raza', 'breed', 'text', formData, handleChange, false, 'Raza'),
-      renderSelect('Sexo', 'sex', SEX_OPTIONS, formData, handleChange, pSettings.requireSex),
-      renderField('Fecha nacimiento', 'birth_date', 'date', formData, handleChange, pSettings.requireBirthDate, ''),
-      renderField(
-        'Color/Señas',
-        'color_markings',
-        'text',
-        formData,
-        handleChange,
-        false,
-        'Color y señas particulares'
-      ),
-      renderField('Peso (kg)', 'weight_kg', 'number', formData, handleChange, false, 'Ej: 28.5'),
-      renderField(
-        'Microchip',
-        'microchip_number',
-        'text',
-        formData,
-        handleChange,
-        pSettings.requireMicrochip,
-        'Nro de microchip'
-      )
-    ),
-
-    // Sección 3: Estado
-    renderSection(
-      'Estado',
-      renderSelect('Estado', 'status', STATUS_OPTIONS, formData, handleChange),
-      renderSelect(
-        'Estado reproductivo',
-        'reproductive_status',
-        REPRODUCTIVE_OPTIONS,
-        formData,
-        handleChange
-      )
-    ),
-
-    // Sección 4: Alertas médicas
-    renderSection(
-      'Alertas médicas',
-      React.createElement(
-        'div',
-        { className: 'flex flex-col gap-1.5' },
-        renderLabel('Alergias'),
-        React.createElement(UI.ChipInput, {
-          values: (formData.allergies_list as string[]) ?? [],
-          onValuesChange: (vals: string[]) => handleChange('allergies_list', vals),
-          inputValue: allergyInput,
-          onInputChange: setAllergyInput,
-          placeholder: 'Escribí y presioná Enter...',
-          onKeyDown: makeChipKeyDown('allergies_list', allergyInput, setAllergyInput),
-        })
-      ),
-      React.createElement(
-        'div',
-        { className: 'flex flex-col gap-1.5' },
-        renderLabel('Condiciones crónicas'),
-        React.createElement(UI.ChipInput, {
-          values: (formData.chronic_list as string[]) ?? [],
-          onValuesChange: (vals: string[]) => handleChange('chronic_list', vals),
-          inputValue: chronicInput,
-          onInputChange: setChronicInput,
-          placeholder: 'Escribí y presioná Enter...',
-          onKeyDown: makeChipKeyDown('chronic_list', chronicInput, setChronicInput),
-        })
-      )
-    ),
-
-    // Sección 5: Datos vet del dueño (solo en creación)
-    !isEdit &&
+      // Sección 1: Dueño
       renderSection(
-        'Datos veterinarios del dueño',
-        renderField(
-          'Tel. emergencia',
-          'emergency_phone',
-          'tel',
-          vetData,
-          handleVetChange,
-          false,
-          '+54 11 9999-0000'
-        ),
-        renderField(
-          'Veterinario preferido',
-          'preferred_vet',
-          'text',
-          vetData,
-          handleVetChange,
-          false,
-          'Dr. García'
-        ),
-        renderSelect(
-          'Cómo nos conoció',
-          'referral_source',
-          REFERRAL_OPTIONS,
-          vetData,
-          handleVetChange
+        'Dueño',
+        React.createElement(
+          'div',
+          { className: 'flex flex-col gap-1.5' },
+          renderLabel('Dueño', true),
+          React.createElement(ContactPicker, {
+            placeholder: 'Buscar dueño...',
+            value: (formData.owner_id as string) ?? null,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            onChange: (c: { id?: string } | null) => handleChange('owner_id', c?.id ?? null),
+            allowCreate: true,
+            onCreateClick: handleCreateContactClick,
+            filters: { type: 'person' },
+          })
         )
       ),
 
-    // Sección 6: Notas
-    renderSection(
-      'Notas',
+      // Sección 2: Datos de la mascota
+      renderSection(
+        'Datos de la mascota',
+        renderField('Nombre', 'name', 'text', formData, handleChange, true, 'Nombre de la mascota'),
+        renderSelect('Especie', 'species', speciesOptions, formData, handleChange, true),
+        renderField('Raza', 'breed', 'text', formData, handleChange, false, 'Raza'),
+        renderSelect('Sexo', 'sex', SEX_OPTIONS, formData, handleChange, pSettings.requireSex),
+        renderField(
+          'Fecha nacimiento',
+          'birth_date',
+          'date',
+          formData,
+          handleChange,
+          pSettings.requireBirthDate,
+          ''
+        ),
+        renderField(
+          'Color/Señas',
+          'color_markings',
+          'text',
+          formData,
+          handleChange,
+          false,
+          'Color y señas particulares'
+        ),
+        renderField('Peso (kg)', 'weight_kg', 'number', formData, handleChange, false, 'Ej: 28.5'),
+        renderField(
+          'Microchip',
+          'microchip_number',
+          'text',
+          formData,
+          handleChange,
+          pSettings.requireMicrochip,
+          'Nro de microchip'
+        )
+      ),
+
+      // Sección 3: Estado
+      renderSection(
+        'Estado',
+        renderSelect('Estado', 'status', STATUS_OPTIONS, formData, handleChange),
+        renderSelect(
+          'Estado reproductivo',
+          'reproductive_status',
+          REPRODUCTIVE_OPTIONS,
+          formData,
+          handleChange
+        )
+      ),
+
+      // Sección 4: Alertas médicas
+      renderSection(
+        'Alertas médicas',
+        React.createElement(
+          'div',
+          { className: 'flex flex-col gap-1.5' },
+          renderLabel('Alergias'),
+          React.createElement(UI.ChipInput, {
+            values: (formData.allergies_list as string[]) ?? [],
+            onValuesChange: (vals: string[]) => handleChange('allergies_list', vals),
+            inputValue: allergyInput,
+            onInputChange: setAllergyInput,
+            placeholder: 'Escribí y presioná Enter...',
+            onKeyDown: makeChipKeyDown('allergies_list', allergyInput, setAllergyInput),
+          })
+        ),
+        React.createElement(
+          'div',
+          { className: 'flex flex-col gap-1.5' },
+          renderLabel('Condiciones crónicas'),
+          React.createElement(UI.ChipInput, {
+            values: (formData.chronic_list as string[]) ?? [],
+            onValuesChange: (vals: string[]) => handleChange('chronic_list', vals),
+            inputValue: chronicInput,
+            onInputChange: setChronicInput,
+            placeholder: 'Escribí y presioná Enter...',
+            onKeyDown: makeChipKeyDown('chronic_list', chronicInput, setChronicInput),
+          })
+        )
+      ),
+
+      // Sección 5: Datos vet del dueño (solo en creación)
+      !isEdit &&
+        renderSection(
+          'Datos veterinarios del dueño',
+          renderField(
+            'Tel. emergencia',
+            'emergency_phone',
+            'tel',
+            vetData,
+            handleVetChange,
+            false,
+            '+54 11 9999-0000'
+          ),
+          renderField(
+            'Veterinario preferido',
+            'preferred_vet',
+            'text',
+            vetData,
+            handleVetChange,
+            false,
+            'Dr. García'
+          ),
+          renderSelect(
+            'Cómo nos conoció',
+            'referral_source',
+            REFERRAL_OPTIONS,
+            vetData,
+            handleVetChange
+          )
+        ),
+
+      // Sección 6: Notas
+      renderSection(
+        'Notas',
+        React.createElement(
+          'div',
+          { className: 'flex flex-col gap-1.5' },
+          renderLabel('Notas'),
+          React.createElement(UI.Textarea, {
+            value: (formData.notes as string) ?? '',
+            onChange: (e: { target: { value: string } }) => handleChange('notes', e.target.value),
+            placeholder: 'Notas adicionales...',
+            rows: 3,
+          })
+        )
+      ),
+
+      // Acciones
       React.createElement(
         'div',
-        { className: 'flex flex-col gap-1.5' },
-        renderLabel('Notas'),
-        React.createElement(UI.Textarea, {
-          value: (formData.notes as string) ?? '',
-          onChange: (e: { target: { value: string } }) => handleChange('notes', e.target.value),
-          placeholder: 'Notas adicionales...',
-          rows: 3,
-        })
-      )
-    ),
-
-    // Acciones
-    React.createElement(
-      'div',
-      { className: 'flex gap-3 pt-2' },
-      React.createElement(
-        UI.Button,
-        {
-          type: 'submit',
-          disabled: isSaving || !formData.name || !formData.owner_id,
-          className: 'flex-1',
-        },
-        isSaving ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear paciente'
-      ),
-      onCancel &&
+        { className: 'flex gap-3 pt-2' },
         React.createElement(
           UI.Button,
           {
-            type: 'button',
-            variant: 'outline',
-            onClick: onCancel,
+            type: 'submit',
+            disabled: isSaving || !formData.name || !formData.owner_id,
+            className: 'flex-1',
           },
-          'Cancelar'
-        )
-    )
+          isSaving ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear paciente'
+        ),
+        onCancel &&
+          React.createElement(
+            UI.Button,
+            {
+              type: 'button',
+              variant: 'outline',
+              onClick: onCancel,
+            },
+            'Cancelar'
+          )
+      )
     ), // cierre del form
 
     // Modal para crear contacto nuevo

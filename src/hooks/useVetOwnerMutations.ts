@@ -58,11 +58,10 @@ export function useVetOwnerMutations(): UseVetOwnerMutationsResult {
     async (contactId: string, data?: Partial<VetOwnerCreateData>): Promise<VetOwner | null> => {
       setSaving(true);
       try {
-        const result = await actions.execute<VetOwner>('patients.owners.ensureOwner', {
+        return await actions.execute<VetOwner>('patients.owners.ensureOwner', {
           contactId,
           data,
         });
-        return result;
       } catch (err) {
         toast.error('Error', err instanceof Error ? err.message : 'No se pudo vincular dueño');
         return null;

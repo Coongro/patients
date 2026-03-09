@@ -13,7 +13,7 @@ import { formatSpecies, SPECIES_EMOJI } from '../utils/labels.js';
 
 const React = getHostReact();
 const UI = getHostUI();
-const { useCallback, useEffect, useMemo } = React;
+const { useCallback, useEffect } = React;
 
 function petSubtitle(pet: Pet): string {
   return [pet.breed || formatSpecies(pet.species), calculateAge(pet.birth_date)]
@@ -37,7 +37,7 @@ function PetSearchContent({
     doSearch(debouncedSearch);
   }, [debouncedSearch, doSearch]);
 
-  // Propagar loading al trigger del Combobox (spinner a la derecha del input)
+  // Comunicar estado de carga al Combobox para que muestre el spinner automáticamente
   useEffect(() => {
     setLoading(loading);
   }, [loading, setLoading]);
@@ -50,26 +50,24 @@ function PetSearchContent({
   return React.createElement(
     UI.ComboboxContent,
     null,
-    loading
-      ? React.createElement(UI.ComboboxEmpty, null, 'Buscando...')
-      : data.length === 0
-        ? React.createElement(
-            UI.ComboboxEmpty,
-            null,
-            debouncedSearch ? 'Sin resultados' : 'Escribí para buscar',
+    data.length === 0
+      ? React.createElement(
+          UI.ComboboxEmpty,
+          null,
+          debouncedSearch ? 'Sin resultados' : 'Escribí para buscar'
+        )
+      : data.map((pet) =>
+          React.createElement(
+            UI.ComboboxItem,
+            {
+              key: pet.id,
+              value: pet.id,
+              subtitle: petSubtitle(pet),
+              icon: React.createElement('span', null, SPECIES_EMOJI[pet.species] ?? '🐾'),
+            },
+            pet.name
           )
-        : data.map((pet) =>
-            React.createElement(
-              UI.ComboboxItem,
-              {
-                key: pet.id,
-                value: pet.id,
-                subtitle: petSubtitle(pet),
-                icon: React.createElement('span', null, SPECIES_EMOJI[pet.species] ?? '🐾'),
-              },
-              pet.name,
-            ),
-          ),
+        )
   );
 }
 
@@ -94,7 +92,7 @@ export function PetPicker({
       const pet = resultsRef.current.find((p) => p.id === petId);
       if (pet) onChange?.(pet);
     },
-    [onChange],
+    [onChange]
   );
 
   const handleClear = useCallback(() => {
@@ -113,8 +111,8 @@ export function PetPicker({
           onRemove: !disabled ? handleClear : undefined,
           size: 'md',
         },
-        selectedPet.name,
-      ),
+        selectedPet.name
+      )
     );
   }
 
@@ -128,6 +126,6 @@ export function PetPicker({
       className,
     },
     React.createElement(UI.ComboboxChipTrigger, { placeholder }),
-    React.createElement(PetSearchContent, { filters, onResults: handleResults }),
+    React.createElement(PetSearchContent, { filters, onResults: handleResults })
   );
 }
