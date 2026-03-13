@@ -36,7 +36,7 @@ export function PatientFormView(props: { petId?: string }) {
 
   return (
     <div className="font-inter min-h-screen bg-cg-bg-secondary p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-cg-text">
             {petId ? 'Editar paciente' : 'Nuevo paciente'}
