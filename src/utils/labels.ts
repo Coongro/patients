@@ -41,6 +41,9 @@ export const REFERRAL_LABELS: Record<string, string> = {
 export const SPECIES_EMOJI: Record<string, string> = {
   dog: '🐕',
   cat: '🐈',
+  bird: '🐦',
+  reptile: '🦎',
+  rodent: '🐹',
   other: '🐾',
 };
 

@@ -75,7 +75,7 @@ function buildPetData(formData: Record<string, unknown>): PetCreateData {
   const weight = formData.weight_kg ? Number(formData.weight_kg) : null;
 
   return {
-    name: (formData.name as string).trim(),
+    name: ((formData.name as string) ?? '').trim(),
     species: formData.species as string,
     breed: (formData.breed as string) || null,
     sex: (formData.sex as string) || null,
@@ -105,21 +105,26 @@ export function usePetFormSubmit(options: UsePetFormSubmitOptions) {
     async (formData: Record<string, unknown>, vetData: Record<string, unknown>) => {
       if (!validateForm(formData, settings, toast)) return;
 
-      const petData = buildPetData(formData);
+      try {
+        const petData = buildPetData(formData);
 
-      let result: Pet | null;
-      if (isEdit && petId) {
-        result = await update(petId, petData);
-      } else {
-        result = await create(petData);
-      }
+        const result = isEdit && petId ? await update(petId, petData) : await create(petData);
 
-      if (result) {
+        if (!result) return;
+
         const hasVetData = Object.values(vetData).some((v) => v);
         if (hasVetData) {
-          await ensureOwner(result.owner_id, vetData as Record<string, string>);
+          const owner = await ensureOwner(result.owner_id, vetData as Record<string, string>);
+          if (!owner) {
+            toast.error(
+              'Datos del dueño',
+              'El paciente se guardó pero no se pudieron guardar los datos veterinarios del dueño.'
+            );
+          }
         }
         onSuccess?.(result);
+      } catch {
+        toast.error('Error', 'Ocurrió un error inesperado al guardar el paciente.');
       }
     },
     [settings, isEdit, petId, create, update, ensureOwner, onSuccess, toast]
