@@ -50,6 +50,7 @@ export function PatientsListView() {
           <PetsTable
             pageSize={20}
             onRowClick={handleRowClick}
+            emptyStateAction={<CreatePetButton onSuccess={handleCreated} />}
             extraActions={[
               {
                 label: 'Ver',

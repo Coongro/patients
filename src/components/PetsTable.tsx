@@ -80,6 +80,7 @@ export function PetsTable(props: PetsTableProps) {
     pageSize = 20,
     className = '',
     emptyMessage = 'No se encontraron pacientes',
+    emptyStateAction,
   } = props;
 
   const { settings: pSettings } = usePatientsSettings();
@@ -106,6 +107,9 @@ export function PetsTable(props: PetsTableProps) {
   );
   const [sortKey, setSortKey] = useState<string>('');
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
+
+  const hasActiveFilters =
+    searchValue !== '' || activeSpeciesFilter !== '' || activeStatusFilter !== '';
 
   // Filtrar columnas según settings de visibilidad
   const defaultColumns = useMemo(
@@ -142,9 +146,9 @@ export function PetsTable(props: PetsTableProps) {
   );
 
   const handleSearch = useCallback(
-    (e: { target: { value: string } }) => {
-      setSearchValue(e.target.value);
-      applyFilters({ query: e.target.value });
+    (value: string) => {
+      setSearchValue(value);
+      applyFilters({ query: value });
     },
     [applyFilters]
   );
@@ -197,62 +201,32 @@ export function PetsTable(props: PetsTableProps) {
     { className: `flex flex-col gap-4 ${className}` },
 
     // Barra de búsqueda y filtros
-    React.createElement(
-      'div',
-      { className: 'flex flex-col gap-3' },
-      // Búsqueda con icono
-      React.createElement(
-        'div',
-        { className: 'relative flex-1' },
-        React.createElement(UI.DynamicIcon, {
-          icon: 'Search',
-          size: 16,
-          className: 'absolute left-3 top-1/2 -translate-y-1/2 text-cg-text-muted',
-        }),
-        React.createElement(UI.Input, {
-          type: 'text',
-          placeholder: 'Buscar por nombre, raza, microchip...',
-          value: searchValue,
-          onChange: handleSearch,
-          className: 'pl-10',
-        })
-      ),
-      // Filtros de especie y estado
-      React.createElement(
-        'div',
-        { className: 'flex items-center gap-4' },
-        React.createElement(
-          UI.ButtonGroup,
-          null,
-          speciesFilterOptions.map((sp) =>
-            React.createElement(
-              UI.ButtonGroupItem,
-              {
-                key: sp,
-                active: activeSpeciesFilter === sp,
-                onClick: () => handleSpeciesFilter(sp),
-              },
-              sp === '' ? 'Todos' : formatSpecies(sp)
-            )
-          )
-        ),
-        React.createElement(
-          UI.ButtonGroup,
-          null,
-          ['', 'active', 'deceased', 'referred', 'lost'].map((st) =>
-            React.createElement(
-              UI.ButtonGroupItem,
-              {
-                key: st,
-                active: activeStatusFilter === st,
-                onClick: () => handleStatusFilter(st),
-              },
-              st === '' ? 'Todos' : formatStatus(st)
-            )
-          )
-        )
-      )
-    ),
+    React.createElement(UI.FilterBar, {
+      searchValue,
+      onSearchChange: handleSearch,
+      searchPlaceholder: 'Buscar por nombre, raza, microchip...',
+      filterSections: [
+        {
+          label: 'Especie',
+          options: speciesFilterOptions.map((sp) => ({
+            value: sp,
+            label: sp === '' ? 'Todos' : formatSpecies(sp),
+          })),
+          value: activeSpeciesFilter,
+          onChange: handleSpeciesFilter,
+        },
+        {
+          label: 'Estado',
+          options: ['', 'active', 'deceased', 'referred', 'lost'].map((st) => ({
+            value: st,
+            label: st === '' ? 'Todos' : formatStatus(st),
+          })),
+          value: activeStatusFilter,
+          onChange: handleStatusFilter,
+        },
+      ],
+      hasActiveFilters,
+    }),
 
     // Tabla
     React.createElement(
@@ -306,7 +280,20 @@ export function PetsTable(props: PetsTableProps) {
                 React.createElement(
                   UI.TableCell,
                   { colSpan: totalColSpan, className: 'p-0' },
-                  React.createElement(UI.EmptyState, { title: emptyMessage })
+                  !hasActiveFilters && emptyStateAction
+                    ? React.createElement(UI.EmptyState, {
+                        title: 'No hay pacientes aún',
+                        description:
+                          'Agrega tu primer paciente para empezar a gestionar historiales y citas.',
+                        icon: React.createElement('span', { className: 'text-2xl' }, '🐾'),
+                        action: emptyStateAction,
+                      })
+                    : React.createElement(UI.EmptyState, {
+                        title: emptyMessage,
+                        description: hasActiveFilters
+                          ? 'Prueba con otros términos o ajusta los filtros.'
+                          : undefined,
+                      })
                 )
               )
             : data.map((pet) =>
