@@ -2,7 +2,7 @@
  * Tipos de mascota para uso en componentes y hooks.
  */
 
-export type Species = 'dog' | 'cat' | 'other';
+export type Species = 'dog' | 'cat' | 'bird' | 'reptile' | 'rodent' | 'other';
 export type PetStatus = 'active' | 'deceased' | 'referred' | 'lost';
 export type PetSex = 'male' | 'female' | 'unknown';
 export type ReproductiveStatus = 'intact' | 'neutered' | 'spayed';

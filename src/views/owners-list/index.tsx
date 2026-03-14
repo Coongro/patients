@@ -48,7 +48,7 @@ export function OwnersListView() {
 
   return (
     <div className="font-inter min-h-screen bg-cg-bg-secondary p-6">
-      <div className="max-w-6xl mx-auto flex flex-col gap-6">
+      <div className="w-full flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-cg-text">Dueños</h1>

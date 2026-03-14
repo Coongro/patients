@@ -1,12 +1,12 @@
 /**
  * Tarjetas de estadísticas de pacientes.
- * Usa StatCard + Skeleton de la librería UI compartida.
+ * Usa StatCardRow de la librería UI compartida.
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
 import { usePetStats } from '../hooks/usePetStats.js';
 import type { PetStatsProps, StatDef } from '../types/components.js';
-import { SPECIES_EMOJI } from '../utils/labels.js';
+import { SPECIES_EMOJI, SPECIES_LABELS } from '../utils/labels.js';
 
 const React = getHostReact();
 const UI = getHostUI();
@@ -26,41 +26,35 @@ export function PetStats(props: PetStatsProps) {
   const cards: StatDef[] = [];
 
   if (stats) {
-    cards.push({
-      label: 'Total',
-      value: stats.total,
-      icon: 'paw',
-      footer: 'Pacientes registrados',
-    });
+    cards.push({ label: 'Total', value: stats.total, icon: '' });
+
+    const activeCount = stats.byStatus.find((s) => s.label === 'active')?.count ?? 0;
+    cards.push({ label: 'Activos', value: activeCount, icon: '' });
+
+    // Tarjeta por especie — solo si hay al menos uno
+    for (const sp of stats.bySpecies) {
+      if (sp.count > 0) {
+        cards.push({
+          label: SPECIES_LABELS[sp.label] ?? sp.label,
+          value: sp.count,
+          icon: sp.label,
+        });
+      }
+    }
   }
 
   cards.push(...extraStats);
 
-  const gridClass = layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex gap-4 overflow-x-auto';
-
-  return React.createElement(
-    'div',
-    { className: `${gridClass} ${className}` },
-    loading
-      ? Array.from({ length: 3 }).map((_, i) =>
-          React.createElement(UI.Skeleton, {
-            key: i,
-            className: 'flex-1 min-w-[280px] h-[236px] rounded-2xl',
-          })
-        )
-      : cards.map((card, i) =>
-          React.createElement(UI.StatCard, {
-            key: i,
-            label: card.label,
-            value: card.value,
-            className: 'flex-1 min-w-[280px] max-w-xs',
-            icon: React.createElement(
-              'span',
-              { className: 'text-2xl' },
-              SPECIES_EMOJI[card.icon] ?? '🐾'
-            ),
-            footer: card.footer ?? undefined,
-          })
-        )
-  );
+  return React.createElement(UI.StatCardRow, {
+    cards: cards.map((c) => ({
+      label: c.label,
+      value: c.value,
+      icon: SPECIES_EMOJI[c.icon] ?? (c.icon || undefined),
+      footer: c.footer ?? undefined,
+    })),
+    loading,
+    skeletonCount: 4,
+    layout,
+    className,
+  });
 }
