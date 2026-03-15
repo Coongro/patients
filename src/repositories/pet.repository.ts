@@ -1,6 +1,6 @@
 import type { ModuleDatabaseAPI } from '@coongro/plugin-sdk';
 import type { SQL } from 'drizzle-orm';
-import { eq, and, or, ilike, isNull, sql, asc, desc } from 'drizzle-orm';
+import { eq, and, or, ne, ilike, isNull, sql, asc, desc } from 'drizzle-orm';
 
 import { petTable } from '../schema/pet.js';
 import type { PetRow, NewPetRow } from '../schema/pet.js';
@@ -9,6 +9,7 @@ export interface PetSearchParams {
   query?: string;
   species?: string;
   status?: string;
+  excludeStatus?: string;
   breed?: string;
   ownerId?: string;
   tags?: string[];
@@ -96,6 +97,7 @@ export class PetRepository {
     query,
     species,
     status,
+    excludeStatus,
     breed,
     ownerId,
     tags,
@@ -131,6 +133,8 @@ export class PetRepository {
 
       if (status) {
         conditions.push(eq(petTable.status, status));
+      } else if (excludeStatus) {
+        conditions.push(ne(petTable.status, excludeStatus));
       }
 
       if (breed) {

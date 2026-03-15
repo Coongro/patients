@@ -6,6 +6,7 @@ import { getHostReact, usePlugin } from '@coongro/plugin-sdk';
 import { CreatePetButton } from '../../components/CreatePetButton.js';
 import { PetsTable } from '../../components/PetsTable.js';
 import { PetStats } from '../../components/PetStats.js';
+import { usePatientsSettings } from '../../hooks/usePatientsSettings.js';
 import type { Pet } from '../../types/pet.js';
 
 const React = getHostReact();
@@ -13,6 +14,7 @@ const { useCallback } = React;
 
 export function PatientsListView() {
   const { views } = usePlugin();
+  const { settings: pSettings } = usePatientsSettings();
 
   const handleRowClick = useCallback(
     (pet: Pet) => {
@@ -23,9 +25,11 @@ export function PatientsListView() {
 
   const handleCreated = useCallback(
     (pet: Pet) => {
-      views.open('patients.detail.open', { petId: pet.id });
+      if (pSettings.openDetailOnCreate) {
+        views.open('patients.detail.open', { petId: pet.id });
+      }
     },
-    [views]
+    [views, pSettings.openDetailOnCreate]
   );
 
   return (

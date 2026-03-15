@@ -37,11 +37,7 @@ export function PetForm(props: PetFormProps) {
   const { settings: pSettings } = usePatientsSettings();
   const { submit, isSaving } = usePetFormSubmit({ petId, settings: pSettings, onSuccess });
 
-  // Opciones de especie filtradas según settings
-  const speciesOptions = pSettings.enabledSpecies.map((code) => ({
-    label: SPECIES_LABELS[code] ?? code,
-    value: code,
-  }));
+  const speciesOptions = toSelectOptions(SPECIES_LABELS);
 
   const [formData, setFormData] = useState<Record<string, unknown>>({
     species: pSettings.defaultSpecies,
@@ -60,6 +56,19 @@ export function PetForm(props: PetFormProps) {
   // Modal para crear contacto desde el picker
   const [showCreateContact, setShowCreateContact] = useState(false);
   const [createContactName, setCreateContactName] = useState('');
+
+  // Sincronizar especie por defecto cuando los settings cargan (solo en creación)
+  useEffect(() => {
+    if (!isEdit && pSettings.defaultSpecies) {
+      setFormData((prev) => ({
+        ...prev,
+        species:
+          prev.species === 'dog' || prev.species === 'cat'
+            ? pSettings.defaultSpecies
+            : prev.species,
+      }));
+    }
+  }, [isEdit, pSettings.defaultSpecies]);
 
   useEffect(() => {
     if (isEdit && pet) {

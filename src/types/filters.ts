@@ -7,6 +7,7 @@ export interface PetFilters {
   query?: string;
   species?: string;
   status?: string;
+  excludeStatus?: string;
   breed?: string;
   ownerId?: string;
   tags?: string[];

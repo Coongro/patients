@@ -16,11 +16,12 @@ import {
   formatSex,
   formatReproductive,
   SPECIES_EMOJI,
+  SPECIES_LABELS,
 } from '../utils/labels.js';
 
 const React = getHostReact();
 const UI = getHostUI();
-const { useState, useCallback, useMemo } = React;
+const { useState, useCallback, useMemo, useEffect } = React;
 
 type ColumnDef = {
   key: string;
@@ -96,7 +97,11 @@ export function PetsTable(props: PetsTableProps) {
     prevPage,
     goToPage,
     refetch,
-  } = usePets({ ...initialFilters, pageSize });
+  } = usePets({
+    ...initialFilters,
+    excludeStatus: pSettings.hideDeceased ? 'deceased' : undefined,
+    pageSize,
+  });
 
   const [searchValue, setSearchValue] = useState('');
   const [activeSpeciesFilter, setActiveSpeciesFilter] = useState<string>(
@@ -108,25 +113,25 @@ export function PetsTable(props: PetsTableProps) {
   const [sortKey, setSortKey] = useState<string>('');
   const [sortDir, setSortDir] = useState<SortDirection>('asc');
 
+  // Re-aplicar filtros cuando hideDeceased cambia en tiempo real
+  useEffect(() => {
+    setFilters({
+      query: searchValue || undefined,
+      species: activeSpeciesFilter || undefined,
+      status: activeStatusFilter || undefined,
+      excludeStatus: !activeStatusFilter && pSettings.hideDeceased ? 'deceased' : undefined,
+    });
+  }, [pSettings.hideDeceased]);
+
   const hasActiveFilters =
     searchValue !== '' || activeSpeciesFilter !== '' || activeStatusFilter !== '';
 
-  // Filtrar columnas según settings de visibilidad
-  const defaultColumns = useMemo(
-    () => ALL_COLUMNS.filter((col) => pSettings.visibleColumns.has(col.key)),
-    [pSettings.visibleColumns]
-  );
-
   const allColumns = useMemo(
-    () => [...(columns ?? defaultColumns), ...extraColumns],
-    [columns, defaultColumns, extraColumns]
+    () => [...(columns ?? ALL_COLUMNS), ...extraColumns],
+    [columns, extraColumns]
   );
 
-  // Especies habilitadas para los botones de filtro
-  const speciesFilterOptions = useMemo(
-    () => ['', ...pSettings.enabledSpecies],
-    [pSettings.enabledSpecies]
-  );
+  const speciesFilterOptions = useMemo(() => ['', ...Object.keys(SPECIES_LABELS)], []);
 
   // Centraliza la actualización de filtros evitando duplicación
   const applyFilters = useCallback(
@@ -140,9 +145,11 @@ export function PetsTable(props: PetsTableProps) {
         query: merged.query || undefined,
         species: merged.species || undefined,
         status: merged.status || undefined,
+        // Si no hay filtro de estado explícito y hideDeceased está activo, excluir fallecidos
+        excludeStatus: !merged.status && pSettings.hideDeceased ? 'deceased' : undefined,
       });
     },
-    [setFilters, searchValue, activeSpeciesFilter, activeStatusFilter]
+    [setFilters, searchValue, activeSpeciesFilter, activeStatusFilter, pSettings.hideDeceased]
   );
 
   const handleSearch = useCallback(
