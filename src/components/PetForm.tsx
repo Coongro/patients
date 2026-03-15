@@ -21,7 +21,7 @@ import {
 
 const React = getHostReact();
 const UI = getHostUI();
-const { useState, useEffect, useCallback } = React;
+const { useState, useEffect, useCallback, useRef } = React;
 
 const FIELD_CLASS = 'flex flex-col gap-1.5';
 const SEX_OPTIONS = toSelectOptions(SEX_LABELS);
@@ -37,11 +37,7 @@ export function PetForm(props: PetFormProps) {
   const { settings: pSettings } = usePatientsSettings();
   const { submit, isSaving } = usePetFormSubmit({ petId, settings: pSettings, onSuccess });
 
-  // Opciones de especie filtradas según settings
-  const speciesOptions = pSettings.enabledSpecies.map((code) => ({
-    label: SPECIES_LABELS[code] ?? code,
-    value: code,
-  }));
+  const speciesOptions = toSelectOptions(SPECIES_LABELS);
 
   const [formData, setFormData] = useState<Record<string, unknown>>({
     species: pSettings.defaultSpecies,
@@ -57,9 +53,22 @@ export function PetForm(props: PetFormProps) {
   const [allergyInput, setAllergyInput] = useState('');
   const [chronicInput, setChronicInput] = useState('');
 
+  // Controla si el usuario ya cambió la especie manualmente
+  const userChangedSpecies = useRef(false);
+
   // Modal para crear contacto desde el picker
   const [showCreateContact, setShowCreateContact] = useState(false);
   const [createContactName, setCreateContactName] = useState('');
+
+  // Sincronizar especie por defecto cuando los settings cargan (solo en creación, si el usuario no cambió)
+  useEffect(() => {
+    if (!isEdit && pSettings.defaultSpecies && !userChangedSpecies.current) {
+      setFormData((prev) => ({
+        ...prev,
+        species: pSettings.defaultSpecies,
+      }));
+    }
+  }, [isEdit, pSettings.defaultSpecies]);
 
   useEffect(() => {
     if (isEdit && pet) {
@@ -172,7 +181,17 @@ export function PetForm(props: PetFormProps) {
       renderSection(
         'Datos de la mascota',
         renderField('Nombre', 'name', 'text', formData, handleChange, true, 'Nombre de la mascota'),
-        renderSelect('Especie', 'species', speciesOptions, formData, handleChange, true),
+        renderSelect(
+          'Especie',
+          'species',
+          speciesOptions,
+          formData,
+          (key, value) => {
+            userChangedSpecies.current = true;
+            handleChange(key, value);
+          },
+          true
+        ),
         renderField('Raza', 'breed', 'text', formData, handleChange, false, 'Raza'),
         renderSelect('Sexo', 'sex', SEX_OPTIONS, formData, handleChange, pSettings.requireSex),
         renderField(

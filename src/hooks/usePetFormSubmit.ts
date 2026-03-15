@@ -123,8 +123,14 @@ export function usePetFormSubmit(options: UsePetFormSubmitOptions) {
           }
         }
         onSuccess?.(result);
-      } catch {
-        toast.error('Error', 'Ocurrió un error inesperado al guardar el paciente.');
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[usePetFormSubmit] Submit failed:', err);
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Ocurrió un error inesperado al guardar el paciente.';
+        toast.error('Error al guardar', message);
       }
     },
     [settings, isEdit, petId, create, update, ensureOwner, onSuccess, toast]

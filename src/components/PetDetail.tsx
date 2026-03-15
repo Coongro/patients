@@ -5,10 +5,12 @@
 import { ContactCard } from '@coongro/contacts';
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
+import { usePatientsSettings } from '../hooks/usePatientsSettings.js';
 import { usePet } from '../hooks/usePet.js';
 import { usePetsByOwner } from '../hooks/usePetsByOwner.js';
 import { useVetOwner } from '../hooks/useVetOwner.js';
 import type { PetDetailProps } from '../types/components.js';
+import type { Pet } from '../types/pet.js';
 import { calculateAge } from '../utils/age.js';
 import {
   formatSpecies,
@@ -24,6 +26,43 @@ import { PetCard } from './PetCard.js';
 const React = getHostReact();
 const UI = getHostUI();
 
+/** Campos del perfil con sus labels — fuente única para info y completitud */
+const PROFILE_FIELDS: Array<{ key: keyof Pet; label: string; format?: (v: unknown) => string }> = [
+  { key: 'species', label: 'Especie', format: (v) => formatSpecies(v as string) },
+  { key: 'breed', label: 'Raza' },
+  { key: 'sex', label: 'Sexo', format: (v) => formatSex(v as string) },
+  { key: 'birth_date', label: 'Edad', format: (v) => calculateAge(v as string) || '' },
+  { key: 'weight_kg', label: 'Peso', format: (v) => (v ? `${String(v)} kg` : '') },
+  { key: 'color_markings', label: 'Color/Señas' },
+  { key: 'microchip_number', label: 'Microchip' },
+  {
+    key: 'reproductive_status',
+    label: 'Estado reproductivo',
+    format: (v) => formatReproductive(v as string),
+  },
+];
+
+function getInfoFields(pet: Pet) {
+  return PROFILE_FIELDS.map((f) => ({
+    label: f.label,
+    value: f.format ? f.format(pet[f.key]) : (pet[f.key] as string | null),
+  })).filter((f) => f.value);
+}
+
+function calculateCompleteness(pet: Pet): { percentage: number; missing: string[] } {
+  const missing: string[] = [];
+  // name siempre está completo (es obligatorio), se cuenta aparte
+  const fields = [{ key: 'name' as keyof Pet, label: 'Nombre' }, ...PROFILE_FIELDS];
+  for (const f of fields) {
+    const val = pet[f.key];
+    if (val === null || val === undefined || val === '') {
+      missing.push(f.label);
+    }
+  }
+  const filled = fields.length - missing.length;
+  return { percentage: Math.round((filled / fields.length) * 100), missing };
+}
+
 export function PetDetail(props: PetDetailProps) {
   const {
     petId,
@@ -36,6 +75,7 @@ export function PetDetail(props: PetDetailProps) {
     className = '',
   } = props;
 
+  const { settings: pSettings } = usePatientsSettings();
   const { pet, loading, error, refetch } = usePet(petId);
   const { vetOwner } = useVetOwner(pet?.owner_id);
   const { pets: siblingPets } = usePetsByOwner(pet?.owner_id);
@@ -81,16 +121,7 @@ export function PetDetail(props: PetDetailProps) {
     (pet.allergies && pet.allergies.length > 0) ||
     (pet.chronic_conditions && pet.chronic_conditions.length > 0);
 
-  const infoFields = [
-    { label: 'Especie', value: formatSpecies(pet.species) },
-    { label: 'Raza', value: pet.breed },
-    { label: 'Sexo', value: formatSex(pet.sex) },
-    { label: 'Edad', value: age },
-    { label: 'Peso', value: pet.weight_kg ? `${pet.weight_kg} kg` : null },
-    { label: 'Color/Señas', value: pet.color_markings },
-    { label: 'Microchip', value: pet.microchip_number },
-    { label: 'Estado reproductivo', value: formatReproductive(pet.reproductive_status) },
-  ].filter((f) => f.value);
+  const infoFields = getInfoFields(pet);
 
   const sortedSections = [...extraSections].sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
 
@@ -192,6 +223,49 @@ export function PetDetail(props: PetDetailProps) {
         )
       )
     ),
+
+    // Indicador de completitud
+    pSettings.showCompleteness &&
+      (() => {
+        const { percentage, missing } = calculateCompleteness(pet);
+        if (percentage >= 100) return null;
+        return React.createElement(
+          UI.Card,
+          { className: 'p-4 flex items-center gap-4' },
+          React.createElement(
+            'div',
+            { className: 'flex-1 flex flex-col gap-1' },
+            React.createElement(
+              'div',
+              { className: 'flex items-center justify-between' },
+              React.createElement(
+                'span',
+                { className: 'text-sm font-medium text-cg-text' },
+                'Completitud del perfil'
+              ),
+              React.createElement(
+                'span',
+                { className: 'text-sm text-cg-text-muted' },
+                `${percentage}%`
+              )
+            ),
+            React.createElement(
+              'div',
+              { className: 'w-full bg-cg-bg-secondary rounded-full h-2' },
+              React.createElement('div', {
+                className: 'bg-cg-accent rounded-full h-2 transition-all',
+                style: { width: `${percentage}%` },
+              })
+            ),
+            missing.length > 0 &&
+              React.createElement(
+                'span',
+                { className: 'text-xs text-cg-text-muted' },
+                `Faltan: ${missing.join(', ')}`
+              )
+          )
+        );
+      })(),
 
     // Alertas médicas
     hasAlerts &&
