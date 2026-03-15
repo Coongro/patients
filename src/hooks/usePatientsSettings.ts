@@ -23,6 +23,14 @@ const SPECIES_LABEL_TO_CODE: Record<string, string> = {
   Gato: 'cat',
 };
 
+/** Convierte valor desconocido a boolean (soporta string "true"/"false" de la API) */
+function toBool(val: unknown, fallback: boolean): boolean {
+  if (typeof val === 'boolean') return val;
+  if (val === 'true') return true;
+  if (val === 'false') return false;
+  return fallback;
+}
+
 /** Defaults cuando no hay settings guardados (mismos que el manifest) */
 const DEFAULTS: Record<string, unknown> = {
   'patients.defaults.species': 'Perro',
@@ -38,13 +46,13 @@ function parseSettings(raw: Record<string, unknown>): PatientsSettings {
   const get = (key: string) => raw[key] ?? DEFAULTS[key];
 
   return {
-    defaultSpecies: SPECIES_LABEL_TO_CODE[get('patients.defaults.species') as string] ?? 'dog',
-    openDetailOnCreate: get('patients.behavior.openDetailOnCreate') as boolean,
-    hideDeceased: get('patients.behavior.hideDeceased') as boolean,
-    showCompleteness: get('patients.behavior.showCompleteness') as boolean,
-    requireSex: get('patients.required.sex') as boolean,
-    requireBirthDate: get('patients.required.birthDate') as boolean,
-    requireMicrochip: get('patients.required.microchip') as boolean,
+    defaultSpecies: SPECIES_LABEL_TO_CODE[String(get('patients.defaults.species'))] ?? 'dog',
+    openDetailOnCreate: toBool(get('patients.behavior.openDetailOnCreate'), true),
+    hideDeceased: toBool(get('patients.behavior.hideDeceased'), true),
+    showCompleteness: toBool(get('patients.behavior.showCompleteness'), false),
+    requireSex: toBool(get('patients.required.sex'), false),
+    requireBirthDate: toBool(get('patients.required.birthDate'), false),
+    requireMicrochip: toBool(get('patients.required.microchip'), false),
   };
 }
 
