@@ -4,70 +4,40 @@
  */
 import { ContactPicker, ContactForm } from '@coongro/contacts';
 import type { Contact } from '@coongro/contacts';
-import { getHostReact, getHostUI, usePlugin } from '@coongro/plugin-sdk';
+import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
 import { usePatientsSettings } from '../hooks/usePatientsSettings.js';
 import { usePet } from '../hooks/usePet.js';
-import { usePetMutations } from '../hooks/usePetMutations.js';
-import { useVetOwnerMutations } from '../hooks/useVetOwnerMutations.js';
+import { usePetFormSubmit } from '../hooks/usePetFormSubmit.js';
 import type { PetFormProps } from '../types/components.js';
-import type { Pet, PetCreateData } from '../types/pet.js';
+import {
+  SPECIES_LABELS,
+  REFERRAL_LABELS,
+  toSelectOptions,
+  SEX_LABELS,
+  STATUS_LABELS,
+  REPRODUCTIVE_LABELS,
+} from '../utils/labels.js';
 
 const React = getHostReact();
 const UI = getHostUI();
-const { useState, useEffect, useCallback } = React;
+const { useState, useEffect, useCallback, useRef } = React;
 
-const ALL_SPECIES_OPTIONS: Record<string, string> = {
-  dog: 'Perro',
-  cat: 'Gato',
-  bird: 'Ave',
-  reptile: 'Reptil',
-  rodent: 'Roedor',
-  other: 'Otro',
-};
-
-const SEX_OPTIONS = [
-  { label: 'Macho', value: 'male' },
-  { label: 'Hembra', value: 'female' },
-  { label: 'Desconocido', value: 'unknown' },
-];
-
-const STATUS_OPTIONS = [
-  { label: 'Activo', value: 'active' },
-  { label: 'Fallecido', value: 'deceased' },
-  { label: 'Derivado', value: 'referred' },
-  { label: 'Perdido', value: 'lost' },
-];
-
-const REPRODUCTIVE_OPTIONS = [
-  { label: 'Entero/a', value: 'intact' },
-  { label: 'Castrado', value: 'neutered' },
-  { label: 'Esterilizada', value: 'spayed' },
-];
-
-const REFERRAL_OPTIONS = [
-  { label: 'Recomendación', value: 'referral' },
-  { label: 'Google', value: 'google' },
-  { label: 'Redes sociales', value: 'social' },
-  { label: 'Pasó por el local', value: 'walk_in' },
-  { label: 'Otro', value: 'other' },
-];
+const FIELD_CLASS = 'flex flex-col gap-1.5';
+const SEX_OPTIONS = toSelectOptions(SEX_LABELS);
+const STATUS_OPTIONS = toSelectOptions(STATUS_LABELS);
+const REPRODUCTIVE_OPTIONS = toSelectOptions(REPRODUCTIVE_LABELS);
+const REFERRAL_OPTIONS = toSelectOptions(REFERRAL_LABELS);
 
 export function PetForm(props: PetFormProps) {
   const { petId, defaults = {}, onSuccess, onCancel, className = '' } = props;
 
   const isEdit = !!petId;
   const { pet, loading: loadingPet } = usePet(petId);
-  const { create, update, creating, updating } = usePetMutations();
-  const { ensureOwner } = useVetOwnerMutations();
-  const { toast } = usePlugin();
   const { settings: pSettings } = usePatientsSettings();
+  const { submit, isSaving } = usePetFormSubmit({ petId, settings: pSettings, onSuccess });
 
-  // Opciones de especie filtradas según settings
-  const speciesOptions = pSettings.enabledSpecies.map((code) => ({
-    label: ALL_SPECIES_OPTIONS[code] ?? code,
-    value: code,
-  }));
+  const speciesOptions = toSelectOptions(SPECIES_LABELS);
 
   const [formData, setFormData] = useState<Record<string, unknown>>({
     species: pSettings.defaultSpecies,
@@ -83,9 +53,22 @@ export function PetForm(props: PetFormProps) {
   const [allergyInput, setAllergyInput] = useState('');
   const [chronicInput, setChronicInput] = useState('');
 
+  // Controla si el usuario ya cambió la especie manualmente
+  const userChangedSpecies = useRef(false);
+
   // Modal para crear contacto desde el picker
   const [showCreateContact, setShowCreateContact] = useState(false);
   const [createContactName, setCreateContactName] = useState('');
+
+  // Sincronizar especie por defecto cuando los settings cargan (solo en creación, si el usuario no cambió)
+  useEffect(() => {
+    if (!isEdit && pSettings.defaultSpecies && !userChangedSpecies.current) {
+      setFormData((prev) => ({
+        ...prev,
+        species: pSettings.defaultSpecies,
+      }));
+    }
+  }, [isEdit, pSettings.defaultSpecies]);
 
   useEffect(() => {
     if (isEdit && pet) {
@@ -149,91 +132,10 @@ export function PetForm(props: PetFormProps) {
   const handleSubmit = useCallback(
     async (e: { preventDefault: () => void }) => {
       e.preventDefault();
-
-      // Validaciones
-      const name = (formData.name as string)?.trim();
-      if (!name || name.length < 2) {
-        toast.error('Validación', 'El nombre debe tener al menos 2 caracteres');
-        return;
-      }
-
-      if (!formData.owner_id) {
-        toast.error('Validación', 'Debe seleccionar un dueño');
-        return;
-      }
-
-      if (pSettings.requireSex && !formData.sex) {
-        toast.error('Validación', 'Debe seleccionar el sexo');
-        return;
-      }
-
-      const birthDate = formData.birth_date as string;
-      if (pSettings.requireBirthDate && !birthDate) {
-        toast.error('Validación', 'Debe indicar la fecha de nacimiento');
-        return;
-      }
-      if (birthDate && new Date(birthDate) > new Date()) {
-        toast.error('Validación', 'La fecha de nacimiento no puede ser futura');
-        return;
-      }
-
-      if (pSettings.requireMicrochip && !formData.microchip_number) {
-        toast.error('Validación', 'Debe indicar el número de microchip');
-        return;
-      }
-
-      const weight = formData.weight_kg ? Number(formData.weight_kg) : null;
-      if (weight !== null && (weight <= 0 || weight >= 200)) {
-        toast.error('Validación', 'El peso debe ser positivo y menor a 200 kg');
-        return;
-      }
-
-      const allergies = (formData.allergies_list as string[])?.length
-        ? (formData.allergies_list as string[])
-        : null;
-      const chronicConditions = (formData.chronic_list as string[])?.length
-        ? (formData.chronic_list as string[])
-        : null;
-
-      const petData: PetCreateData = {
-        name,
-        species: formData.species as string,
-        breed: (formData.breed as string) || null,
-        sex: (formData.sex as string) || null,
-        color_markings: (formData.color_markings as string) || null,
-        birth_date: birthDate || null,
-        weight_kg: weight ? String(weight) : null,
-        microchip_number: (formData.microchip_number as string) || null,
-        owner_id: formData.owner_id as string,
-        photo_url: (formData.photo_url as string) || null,
-        status: (formData.status as string) || 'active',
-        reproductive_status: (formData.reproductive_status as string) || null,
-        allergies,
-        chronic_conditions: chronicConditions,
-        notes: (formData.notes as string) || null,
-        is_active: formData.is_active as boolean,
-      };
-
-      let result: Pet | null;
-      if (isEdit && petId) {
-        result = await update(petId, petData);
-      } else {
-        result = await create(petData);
-      }
-
-      if (result) {
-        // Guardar datos vet del dueño si hay algo
-        const hasVetData = Object.values(vetData).some((v) => v);
-        if (hasVetData) {
-          await ensureOwner(result.owner_id, vetData as Record<string, string>);
-        }
-        onSuccess?.(result);
-      }
+      await submit(formData, vetData);
     },
-    [formData, vetData, isEdit, petId, create, update, ensureOwner, onSuccess, toast]
+    [formData, vetData, submit]
   );
-
-  const isSaving = creating || updating;
 
   if (isEdit && loadingPet) {
     return React.createElement(
@@ -261,7 +163,7 @@ export function PetForm(props: PetFormProps) {
         'Dueño',
         React.createElement(
           'div',
-          { className: 'flex flex-col gap-1.5' },
+          { className: FIELD_CLASS },
           renderLabel('Dueño', true),
           React.createElement(ContactPicker, {
             placeholder: 'Buscar dueño...',
@@ -279,7 +181,17 @@ export function PetForm(props: PetFormProps) {
       renderSection(
         'Datos de la mascota',
         renderField('Nombre', 'name', 'text', formData, handleChange, true, 'Nombre de la mascota'),
-        renderSelect('Especie', 'species', speciesOptions, formData, handleChange, true),
+        renderSelect(
+          'Especie',
+          'species',
+          speciesOptions,
+          formData,
+          (key, value) => {
+            userChangedSpecies.current = true;
+            handleChange(key, value);
+          },
+          true
+        ),
         renderField('Raza', 'breed', 'text', formData, handleChange, false, 'Raza'),
         renderSelect('Sexo', 'sex', SEX_OPTIONS, formData, handleChange, pSettings.requireSex),
         renderField(
@@ -330,7 +242,7 @@ export function PetForm(props: PetFormProps) {
         'Alertas médicas',
         React.createElement(
           'div',
-          { className: 'flex flex-col gap-1.5' },
+          { className: FIELD_CLASS },
           renderLabel('Alergias'),
           React.createElement(UI.ChipInput, {
             values: (formData.allergies_list as string[]) ?? [],
@@ -343,7 +255,7 @@ export function PetForm(props: PetFormProps) {
         ),
         React.createElement(
           'div',
-          { className: 'flex flex-col gap-1.5' },
+          { className: FIELD_CLASS },
           renderLabel('Condiciones crónicas'),
           React.createElement(UI.ChipInput, {
             values: (formData.chronic_list as string[]) ?? [],
@@ -392,7 +304,7 @@ export function PetForm(props: PetFormProps) {
         'Notas',
         React.createElement(
           'div',
-          { className: 'flex flex-col gap-1.5' },
+          { className: FIELD_CLASS },
           renderLabel('Notas'),
           React.createElement(UI.Textarea, {
             value: (formData.notes as string) ?? '',
@@ -485,7 +397,7 @@ function renderField(
 ) {
   return React.createElement(
     'div',
-    { className: 'flex flex-col gap-1.5' },
+    { className: FIELD_CLASS },
     renderLabel(label, required),
     React.createElement(UI.Input, {
       type,
@@ -508,7 +420,7 @@ function renderSelect(
 ) {
   return React.createElement(
     'div',
-    { className: 'flex flex-col gap-1.5' },
+    { className: FIELD_CLASS },
     renderLabel(label, required),
     React.createElement(
       UI.Select,

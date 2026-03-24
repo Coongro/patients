@@ -126,7 +126,7 @@ export function OwnerDetailView(props: { contactId?: string }) {
     { className: 'font-inter min-h-screen bg-cg-bg-secondary p-6' },
     React.createElement(
       'div',
-      { className: 'max-w-3xl mx-auto flex flex-col gap-4' },
+      { className: 'w-full flex flex-col gap-4' },
       // Botón volver
       React.createElement(
         UI.Button,

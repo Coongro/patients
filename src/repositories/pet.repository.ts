@@ -1,24 +1,10 @@
 import type { ModuleDatabaseAPI } from '@coongro/plugin-sdk';
 import type { SQL } from 'drizzle-orm';
-import { eq, and, or, ilike, isNull, sql, asc, desc } from 'drizzle-orm';
+import { eq, and, or, ne, ilike, isNull, sql, asc, desc } from 'drizzle-orm';
 
 import { petTable } from '../schema/pet.js';
 import type { PetRow, NewPetRow } from '../schema/pet.js';
-
-export interface PetSearchParams {
-  query?: string;
-  species?: string;
-  status?: string;
-  breed?: string;
-  ownerId?: string;
-  tags?: string[];
-  isActive?: boolean;
-  includeDeleted?: boolean;
-  limit?: number;
-  offset?: number;
-  orderBy?: string;
-  orderDir?: 'asc' | 'desc';
-}
+import type { PetFilters } from '../types/filters.js';
 
 export interface CountResult {
   label: string;
@@ -96,6 +82,7 @@ export class PetRepository {
     query,
     species,
     status,
+    excludeStatus,
     breed,
     ownerId,
     tags,
@@ -105,7 +92,7 @@ export class PetRepository {
     offset,
     orderBy: orderByField,
     orderDir = 'asc',
-  }: PetSearchParams): Promise<PetRow[]> {
+  }: PetFilters): Promise<PetRow[]> {
     return this.db.ormQuery((tx) => {
       const conditions: SQL[] = [];
 
@@ -131,6 +118,8 @@ export class PetRepository {
 
       if (status) {
         conditions.push(eq(petTable.status, status));
+      } else if (excludeStatus) {
+        conditions.push(ne(petTable.status, excludeStatus));
       }
 
       if (breed) {

@@ -8,6 +8,6 @@ export type { PetRow, NewPetRow } from './schema/pet.js';
 export { vetOwnerTable } from './schema/vet-owner.js';
 export type { VetOwnerRow, NewVetOwnerRow } from './schema/vet-owner.js';
 export { PetRepository } from './repositories/pet.repository.js';
-export type { PetSearchParams, CountResult } from './repositories/pet.repository.js';
+export type { CountResult } from './repositories/pet.repository.js';
 export { VetOwnerRepository } from './repositories/vet-owner.repository.js';
 export type { VetOwnerSearchParams } from './repositories/vet-owner.repository.js';

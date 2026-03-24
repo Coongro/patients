@@ -3,6 +3,7 @@
  * Reutiliza ColumnDef, ActionDef, etc. de @coongro/contacts.
  */
 import type { ColumnDef, ActionDef, FieldDef, SectionDef, StatDef } from '@coongro/contacts';
+import type { ReactNode } from 'react';
 
 import type { PetFilters } from './filters.js';
 import type { Pet, PetCreateData } from './pet.js';
@@ -23,6 +24,8 @@ export interface PetsTableProps {
   pageSize?: number;
   className?: string;
   emptyMessage?: string;
+  /** Acción (botón) mostrada en el empty state cuando no hay pacientes registrados */
+  emptyStateAction?: ReactNode;
 }
 
 // ---------------------------------------------------------------------------

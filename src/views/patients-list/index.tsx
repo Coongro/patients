@@ -6,6 +6,7 @@ import { getHostReact, usePlugin } from '@coongro/plugin-sdk';
 import { CreatePetButton } from '../../components/CreatePetButton.js';
 import { PetsTable } from '../../components/PetsTable.js';
 import { PetStats } from '../../components/PetStats.js';
+import { usePatientsSettings } from '../../hooks/usePatientsSettings.js';
 import type { Pet } from '../../types/pet.js';
 
 const React = getHostReact();
@@ -13,6 +14,7 @@ const { useCallback } = React;
 
 export function PatientsListView() {
   const { views } = usePlugin();
+  const { settings: pSettings } = usePatientsSettings();
 
   const handleRowClick = useCallback(
     (pet: Pet) => {
@@ -23,14 +25,16 @@ export function PatientsListView() {
 
   const handleCreated = useCallback(
     (pet: Pet) => {
-      views.open('patients.detail.open', { petId: pet.id });
+      if (pSettings.openDetailOnCreate) {
+        views.open('patients.detail.open', { petId: pet.id });
+      }
     },
-    [views]
+    [views, pSettings.openDetailOnCreate]
   );
 
   return (
     <div className="font-inter min-h-screen bg-cg-bg-secondary p-6">
-      <div className="max-w-6xl mx-auto flex flex-col gap-6">
+      <div className="w-full flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -50,6 +54,7 @@ export function PatientsListView() {
           <PetsTable
             pageSize={20}
             onRowClick={handleRowClick}
+            emptyStateAction={<CreatePetButton onSuccess={handleCreated} />}
             extraActions={[
               {
                 label: 'Ver',
