@@ -21,6 +21,10 @@ export interface PatientsSettings {
 const SPECIES_LABEL_TO_CODE: Record<string, string> = {
   Perro: 'dog',
   Gato: 'cat',
+  Ave: 'bird',
+  Reptil: 'reptile',
+  Roedor: 'rodent',
+  Otro: 'other',
 };
 
 /** Convierte valor desconocido a boolean (soporta string "true"/"false" de la API) */
