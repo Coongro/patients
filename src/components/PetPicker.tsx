@@ -9,7 +9,7 @@ import { usePets } from '../hooks/usePets.js';
 import type { PetPickerProps } from '../types/components.js';
 import type { Pet } from '../types/pet.js';
 import { calculateAge } from '../utils/age.js';
-import { formatSpecies, SPECIES_EMOJI } from '../utils/labels.js';
+import { formatSpecies, SPECIES_ICON } from '../utils/labels.js';
 
 const React = getHostReact();
 const UI = getHostUI();
@@ -63,7 +63,10 @@ function PetSearchContent({
               key: pet.id,
               value: pet.id,
               subtitle: petSubtitle(pet),
-              icon: React.createElement('span', null, SPECIES_EMOJI[pet.species] ?? '🐾'),
+              icon: React.createElement(UI.DynamicIcon, {
+                icon: SPECIES_ICON[pet.species] ?? 'PawPrint',
+                size: 16,
+              }),
             },
             pet.name
           )
@@ -107,7 +110,10 @@ export function PetPicker({
       React.createElement(
         UI.Chip,
         {
-          icon: React.createElement('span', null, SPECIES_EMOJI[selectedPet.species] ?? '🐾'),
+          icon: React.createElement(UI.DynamicIcon, {
+            icon: SPECIES_ICON[selectedPet.species] ?? 'PawPrint',
+            size: 16,
+          }),
           onRemove: !disabled ? handleClear : undefined,
           size: 'md',
         },

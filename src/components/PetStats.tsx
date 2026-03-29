@@ -6,7 +6,7 @@ import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
 import { usePetStats } from '../hooks/usePetStats.js';
 import type { PetStatsProps, StatDef } from '../types/components.js';
-import { SPECIES_EMOJI, SPECIES_LABELS } from '../utils/labels.js';
+import { SPECIES_ICON, SPECIES_LABELS } from '../utils/labels.js';
 
 const React = getHostReact();
 const UI = getHostUI();
@@ -49,7 +49,9 @@ export function PetStats(props: PetStatsProps) {
     cards: cards.map((c) => ({
       label: c.label,
       value: c.value,
-      icon: SPECIES_EMOJI[c.icon] ?? (c.icon || undefined),
+      icon: SPECIES_ICON[c.icon]
+        ? React.createElement(UI.DynamicIcon, { icon: SPECIES_ICON[c.icon], size: 18 })
+        : c.icon || undefined,
       footer: c.footer ?? undefined,
     })),
     loading,
