@@ -3,11 +3,12 @@
  */
 import { ContactsTable, CreateContactButton } from '@coongro/contacts';
 import type { Contact } from '@coongro/contacts';
-import { getHostReact, usePlugin, actions } from '@coongro/plugin-sdk';
+import { getHostReact, getHostUI, usePlugin, actions } from '@coongro/plugin-sdk';
 
 import type { Pet } from '../../types/pet.js';
 
 const React = getHostReact();
+const UI = getHostUI();
 const { useState, useEffect, useCallback } = React;
 
 export function OwnersListView() {
@@ -66,6 +67,21 @@ export function OwnersListView() {
         <div className="bg-cg-bg rounded-xl border border-cg-border p-6 shadow-sm">
           <ContactsTable
             filters={{ type: 'person' }}
+            columns={[
+              { key: 'name', header: 'Nombre' },
+              { key: 'phone', header: 'Teléfono', render: (c: Contact) => c.phone ?? '—' },
+              { key: 'email', header: 'Email', render: (c: Contact) => c.email ?? '—' },
+              {
+                key: 'is_active',
+                header: 'Estado',
+                render: (c: Contact) =>
+                  React.createElement(
+                    UI.Badge,
+                    { variant: c.is_active ? 'success-soft' : 'secondary', size: 'sm' },
+                    c.is_active ? 'Activo' : 'Inactivo'
+                  ),
+              },
+            ]}
             pageSize={20}
             onRowClick={handleRowClick}
             extraColumns={[
@@ -74,7 +90,14 @@ export function OwnersListView() {
                 header: 'Mascotas',
                 render: (contact: Contact) => {
                   const count = petCounts[contact.id] ?? 0;
-                  return count > 0 ? `${count} 🐾` : '—';
+                  return count > 0
+                    ? React.createElement(
+                        'span',
+                        { className: 'inline-flex items-center gap-1' },
+                        count,
+                        React.createElement(UI.DynamicIcon, { icon: 'PawPrint', size: 14 })
+                      )
+                    : '—';
                 },
               },
             ]}

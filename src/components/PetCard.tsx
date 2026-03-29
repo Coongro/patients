@@ -6,7 +6,7 @@ import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 import { usePet } from '../hooks/usePet.js';
 import type { PetCardProps } from '../types/components.js';
 import { calculateAge } from '../utils/age.js';
-import { formatSpecies, formatStatus, formatSex, SPECIES_EMOJI } from '../utils/labels.js';
+import { formatSpecies, formatStatus, formatSex, SPECIES_ICON } from '../utils/labels.js';
 
 const React = getHostReact();
 const UI = getHostUI();
@@ -51,7 +51,7 @@ export function PetCard(props: PetCardProps) {
     );
   }
 
-  const emoji = SPECIES_EMOJI[pet.species] ?? '🐾';
+  const speciesIcon = SPECIES_ICON[pet.species] ?? 'PawPrint';
   const age = calculateAge(pet.birth_date);
   const infoItems = [formatSpecies(pet.species), pet.breed, formatSex(pet.sex), age].filter(
     Boolean
@@ -72,8 +72,12 @@ export function PetCard(props: PetCardProps) {
       { className: 'flex items-center gap-3' },
       React.createElement(UI.Avatar, {
         size: 'md',
-        icon: React.createElement('span', null, emoji),
-        className: 'bg-emerald-100',
+        icon: React.createElement(UI.DynamicIcon, {
+          icon: speciesIcon,
+          size: 20,
+          className: 'text-cg-text-muted',
+        }),
+        className: 'bg-cg-bg-tertiary',
       }),
       React.createElement(
         'div',
