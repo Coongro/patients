@@ -134,7 +134,13 @@ export function PetsTable(props: PetsTableProps) {
     [columns, extraColumns]
   );
 
-  const speciesFilterOptions = useMemo(() => ['', ...Object.keys(SPECIES_LABELS)], []);
+  const speciesFilterOptions = useMemo(
+    () => [
+      '',
+      ...Object.keys(SPECIES_LABELS).filter((sp) => pSettings.enabledSpecies[sp] !== false),
+    ],
+    [pSettings.enabledSpecies]
+  );
 
   // Centraliza la actualización de filtros evitando duplicación
   const applyFilters = useCallback(

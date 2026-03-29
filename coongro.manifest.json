@@ -97,6 +97,62 @@
       ],
       "sections": [
         {
+          "id": "patients.general.species",
+          "page": "patients.general",
+          "label": "Especies habilitadas",
+          "order": 5,
+          "items": [
+            {
+              "key": "patients.species.dog",
+              "type": "boolean",
+              "label": "Perro",
+              "description": "Habilitar especie Perro",
+              "default": true,
+              "tags": ["pacientes", "especie", "perro"]
+            },
+            {
+              "key": "patients.species.cat",
+              "type": "boolean",
+              "label": "Gato",
+              "description": "Habilitar especie Gato",
+              "default": true,
+              "tags": ["pacientes", "especie", "gato"]
+            },
+            {
+              "key": "patients.species.bird",
+              "type": "boolean",
+              "label": "Ave",
+              "description": "Habilitar especie Ave",
+              "default": false,
+              "tags": ["pacientes", "especie", "ave"]
+            },
+            {
+              "key": "patients.species.reptile",
+              "type": "boolean",
+              "label": "Reptil",
+              "description": "Habilitar especie Reptil",
+              "default": false,
+              "tags": ["pacientes", "especie", "reptil"]
+            },
+            {
+              "key": "patients.species.rodent",
+              "type": "boolean",
+              "label": "Roedor",
+              "description": "Habilitar especie Roedor",
+              "default": false,
+              "tags": ["pacientes", "especie", "roedor"]
+            },
+            {
+              "key": "patients.species.other",
+              "type": "boolean",
+              "label": "Otro",
+              "description": "Habilitar especie Otro (exóticos, etc.)",
+              "default": true,
+              "tags": ["pacientes", "especie", "otro", "exótico"]
+            }
+          ]
+        },
+        {
           "id": "patients.general.behavior",
           "page": "patients.general",
           "label": "Comportamiento",
@@ -110,14 +166,16 @@
               "default": "Perro",
               "options": [
                 "Perro",
-                "Gato"
+                "Gato",
+                "Ave",
+                "Reptil",
+                "Roedor",
+                "Otro"
               ],
               "tags": [
                 "pacientes",
                 "especie",
-                "defecto",
-                "perro",
-                "gato"
+                "defecto"
               ]
             },
             {
