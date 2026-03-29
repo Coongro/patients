@@ -5,6 +5,9 @@
 import { useSettings } from '@coongro/plugin-sdk';
 
 export interface PatientsSettings {
+  // Especies habilitadas
+  enabledSpecies: Record<string, boolean>;
+
   // Comportamiento
   defaultSpecies: string;
   openDetailOnCreate: boolean;
@@ -17,11 +20,18 @@ export interface PatientsSettings {
   requireMicrochip: boolean;
 }
 
-// Mapeo temporal: label español → código interno (workaround hasta Coongro/Coongro#314)
+/** Mapeo label español → código interno */
 const SPECIES_LABEL_TO_CODE: Record<string, string> = {
   Perro: 'dog',
   Gato: 'cat',
+  Ave: 'bird',
+  Reptil: 'reptile',
+  Roedor: 'rodent',
+  Otro: 'other',
 };
+
+/** Especies disponibles y sus keys en settings */
+const SPECIES_KEYS = ['dog', 'cat', 'bird', 'reptile', 'rodent', 'other'] as const;
 
 /** Convierte valor desconocido a boolean (soporta string "true"/"false" de la API) */
 function toBool(val: unknown, fallback: boolean): boolean {
@@ -33,6 +43,12 @@ function toBool(val: unknown, fallback: boolean): boolean {
 
 /** Defaults cuando no hay settings guardados (mismos que el manifest) */
 const DEFAULTS: Record<string, unknown> = {
+  'patients.species.dog': true,
+  'patients.species.cat': true,
+  'patients.species.bird': false,
+  'patients.species.reptile': false,
+  'patients.species.rodent': false,
+  'patients.species.other': true,
   'patients.defaults.species': 'Perro',
   'patients.behavior.openDetailOnCreate': true,
   'patients.behavior.hideDeceased': true,
@@ -45,7 +61,16 @@ const DEFAULTS: Record<string, unknown> = {
 function parseSettings(raw: Record<string, unknown>): PatientsSettings {
   const get = (key: string) => raw[key] ?? DEFAULTS[key];
 
+  const enabledSpecies: Record<string, boolean> = {};
+  for (const sp of SPECIES_KEYS) {
+    enabledSpecies[sp] = toBool(
+      get(`patients.species.${sp}`),
+      DEFAULTS[`patients.species.${sp}`] as boolean
+    );
+  }
+
   return {
+    enabledSpecies,
     defaultSpecies: SPECIES_LABEL_TO_CODE[String(get('patients.defaults.species'))] ?? 'dog',
     openDetailOnCreate: toBool(get('patients.behavior.openDetailOnCreate'), true),
     hideDeceased: toBool(get('patients.behavior.hideDeceased'), true),
