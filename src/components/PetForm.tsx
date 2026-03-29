@@ -65,7 +65,9 @@ export function PetForm(props: PetFormProps) {
   const { settings: pSettings } = usePatientsSettings();
   const { submit, isSaving } = usePetFormSubmit({ petId, settings: pSettings, onSuccess });
 
-  const speciesOptions = toSelectOptions(SPECIES_LABELS);
+  const speciesOptions = toSelectOptions(SPECIES_LABELS).filter(
+    (opt) => pSettings.enabledSpecies[opt.value] !== false
+  );
 
   const [formData, setFormData] = useState<Record<string, unknown>>({
     species: pSettings.defaultSpecies,
