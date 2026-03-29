@@ -15,7 +15,7 @@ import {
   formatStatus,
   formatSex,
   formatReproductive,
-  SPECIES_EMOJI,
+  SPECIES_ICON,
   SPECIES_LABELS,
 } from '../utils/labels.js';
 
@@ -41,7 +41,10 @@ const ALL_COLUMNS: ColumnDef[] = [
       React.createElement(
         'div',
         { className: 'flex items-center gap-2' },
-        React.createElement('span', null, SPECIES_EMOJI[p.species] ?? '🐾'),
+        React.createElement(UI.DynamicIcon, {
+          icon: SPECIES_ICON[p.species] ?? 'PawPrint',
+          size: 16,
+        }),
         React.createElement('span', { className: 'font-medium' }, p.name)
       ),
   },
@@ -292,7 +295,7 @@ export function PetsTable(props: PetsTableProps) {
                         title: 'No hay pacientes aún',
                         description:
                           'Agrega tu primer paciente para empezar a gestionar historiales y citas.',
-                        icon: React.createElement('span', { className: 'text-2xl' }, '🐾'),
+                        icon: React.createElement(UI.DynamicIcon, { icon: 'PawPrint', size: 24 }),
                         action: emptyStateAction,
                       })
                     : React.createElement(UI.EmptyState, {

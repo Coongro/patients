@@ -18,7 +18,7 @@ import {
   formatSex,
   formatReproductive,
   formatReferral,
-  SPECIES_EMOJI,
+  SPECIES_ICON,
 } from '../utils/labels.js';
 
 import { PetCard } from './PetCard.js';
@@ -115,7 +115,7 @@ export function PetDetail(props: PetDetailProps) {
     });
   }
 
-  const emoji = SPECIES_EMOJI[pet.species] ?? '🐾';
+  const speciesIcon = SPECIES_ICON[pet.species] ?? 'PawPrint';
   const age = calculateAge(pet.birth_date);
   const hasAlerts =
     (pet.allergies && pet.allergies.length > 0) ||
@@ -185,8 +185,12 @@ export function PetDetail(props: PetDetailProps) {
       { className: 'flex items-center gap-4' },
       React.createElement(UI.Avatar, {
         size: 'lg',
-        icon: React.createElement('span', null, emoji),
-        className: 'bg-emerald-100',
+        icon: React.createElement(UI.DynamicIcon, {
+          icon: speciesIcon,
+          size: 28,
+          className: 'text-cg-text-muted',
+        }),
+        className: 'bg-cg-bg-tertiary',
       }),
       React.createElement(
         'div',
@@ -274,7 +278,11 @@ export function PetDetail(props: PetDetailProps) {
         {
           className: 'p-4 border-cg-warning-border bg-cg-warning-bg flex items-start gap-3',
         },
-        React.createElement('span', { className: 'text-lg' }, '⚠️'),
+        React.createElement(UI.DynamicIcon, {
+          icon: 'AlertTriangle',
+          size: 20,
+          className: 'text-cg-warning-text',
+        }),
         React.createElement(
           'div',
           { className: 'flex flex-col gap-1' },

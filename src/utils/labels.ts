@@ -38,13 +38,14 @@ export const REFERRAL_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
-export const SPECIES_EMOJI: Record<string, string> = {
-  dog: '🐕',
-  cat: '🐈',
-  bird: '🐦',
-  reptile: '🦎',
-  rodent: '🐹',
-  other: '🐾',
+/** Mapeo especie → nombre de icono Lucide (coherente con manifest settings) */
+export const SPECIES_ICON: Record<string, string> = {
+  dog: 'Dog',
+  cat: 'Cat',
+  bird: 'Bird',
+  reptile: 'Turtle',
+  rodent: 'Rabbit',
+  other: 'PawPrint',
 };
 
 /** Convierte un mapa de labels a opciones para Select */

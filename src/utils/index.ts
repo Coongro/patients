@@ -5,7 +5,7 @@ export {
   SEX_LABELS,
   REPRODUCTIVE_LABELS,
   REFERRAL_LABELS,
-  SPECIES_EMOJI,
+  SPECIES_ICON,
   formatSpecies,
   formatStatus,
   formatSex,
