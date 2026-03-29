@@ -1,6 +1,6 @@
 {
   "id": "patients",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "apiVersion": "2.0",
   "assets": {
     "styles": [
@@ -108,7 +108,11 @@
               "label": "Perro",
               "description": "Habilitar especie Perro",
               "default": true,
-              "tags": ["pacientes", "especie", "perro"]
+              "tags": [
+                "pacientes",
+                "especie",
+                "perro"
+              ]
             },
             {
               "key": "patients.species.cat",
@@ -116,7 +120,11 @@
               "label": "Gato",
               "description": "Habilitar especie Gato",
               "default": true,
-              "tags": ["pacientes", "especie", "gato"]
+              "tags": [
+                "pacientes",
+                "especie",
+                "gato"
+              ]
             },
             {
               "key": "patients.species.bird",
@@ -124,7 +132,11 @@
               "label": "Ave",
               "description": "Habilitar especie Ave",
               "default": false,
-              "tags": ["pacientes", "especie", "ave"]
+              "tags": [
+                "pacientes",
+                "especie",
+                "ave"
+              ]
             },
             {
               "key": "patients.species.reptile",
@@ -132,7 +144,11 @@
               "label": "Reptil",
               "description": "Habilitar especie Reptil",
               "default": false,
-              "tags": ["pacientes", "especie", "reptil"]
+              "tags": [
+                "pacientes",
+                "especie",
+                "reptil"
+              ]
             },
             {
               "key": "patients.species.rodent",
@@ -140,7 +156,11 @@
               "label": "Roedor",
               "description": "Habilitar especie Roedor",
               "default": false,
-              "tags": ["pacientes", "especie", "roedor"]
+              "tags": [
+                "pacientes",
+                "especie",
+                "roedor"
+              ]
             },
             {
               "key": "patients.species.other",
@@ -148,7 +168,12 @@
               "label": "Otro",
               "description": "Habilitar especie Otro (exóticos, etc.)",
               "default": true,
-              "tags": ["pacientes", "especie", "otro", "exótico"]
+              "tags": [
+                "pacientes",
+                "especie",
+                "otro",
+                "exótico"
+              ]
             }
           ]
         },
