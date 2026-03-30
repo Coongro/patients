@@ -2,6 +2,7 @@
  * Formulario de crear/editar mascota.
  * Incluye ContactPicker de @coongro/contacts para seleccionar dueño.
  */
+import { DatePicker } from '@coongro/calendar';
 import { ContactPicker, ContactForm } from '@coongro/contacts';
 import type { Contact } from '@coongro/contacts';
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
@@ -274,14 +275,16 @@ export function PetForm(props: PetFormProps) {
             )
           )
         ),
-        renderField(
-          'Fecha nacimiento',
-          'birth_date',
-          'date',
-          formData,
-          handleChange,
-          pSettings.requireBirthDate,
-          ''
+        React.createElement(
+          'div',
+          { className: FIELD_CLASS },
+          renderLabel('Fecha nacimiento', pSettings.requireBirthDate),
+          React.createElement(DatePicker, {
+            value: (formData.birth_date as string) ?? '',
+            onChange: (date: string) => handleChange('birth_date', date),
+            maxDate: new Date().toISOString().slice(0, 10),
+            placeholder: 'Seleccionar fecha',
+          })
         ),
         renderField(
           'Color/Señas',
