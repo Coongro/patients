@@ -165,12 +165,12 @@
               "description": "Especie preseleccionada al crear un paciente",
               "default": "Perro",
               "options": [
-                "Perro",
-                "Gato",
-                "Ave",
-                "Reptil",
-                "Roedor",
-                "Otro"
+                { "value": "Perro", "icon": "Dog" },
+                { "value": "Gato", "icon": "Cat" },
+                { "value": "Ave", "icon": "Bird" },
+                { "value": "Reptil", "icon": "Turtle" },
+                { "value": "Roedor", "icon": "Rabbit" },
+                { "value": "Otro", "icon": "PawPrint" }
               ],
               "tags": [
                 "pacientes",
