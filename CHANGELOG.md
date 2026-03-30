@@ -1,5 +1,11 @@
 # @coongro/patients
 
+## 1.1.2
+
+### Patch Changes
+
+- f247946: Add Lucide icons to species enum options in settings dropdown
+
 ## 1.1.1
 
 ### Patch Changes

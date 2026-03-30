@@ -1,6 +1,6 @@
 {
   "id": "patients",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "apiVersion": "2.0",
   "assets": {
     "styles": [
@@ -190,12 +190,30 @@
               "description": "Especie preseleccionada al crear un paciente",
               "default": "Perro",
               "options": [
-                { "value": "Perro", "icon": "Dog" },
-                { "value": "Gato", "icon": "Cat" },
-                { "value": "Ave", "icon": "Bird" },
-                { "value": "Reptil", "icon": "Turtle" },
-                { "value": "Roedor", "icon": "Rabbit" },
-                { "value": "Otro", "icon": "PawPrint" }
+                {
+                  "value": "Perro",
+                  "icon": "Dog"
+                },
+                {
+                  "value": "Gato",
+                  "icon": "Cat"
+                },
+                {
+                  "value": "Ave",
+                  "icon": "Bird"
+                },
+                {
+                  "value": "Reptil",
+                  "icon": "Turtle"
+                },
+                {
+                  "value": "Roedor",
+                  "icon": "Rabbit"
+                },
+                {
+                  "value": "Otro",
+                  "icon": "PawPrint"
+                }
               ],
               "tags": [
                 "pacientes",
