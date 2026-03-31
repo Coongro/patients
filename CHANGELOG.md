@@ -1,5 +1,11 @@
 # @coongro/patients
 
+## 1.2.0
+
+### Minor Changes
+
+- a110ea2: Use DatePicker from @coongro/calendar for birth date field
+
 ## 1.1.2
 
 ### Patch Changes
