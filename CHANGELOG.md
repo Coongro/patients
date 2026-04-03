@@ -1,5 +1,11 @@
 # @coongro/patients
 
+## 1.2.1
+
+### Patch Changes
+
+- 5a4e395: fix: migrate PetsTable to DataTable with mobileRender for mobile card view
+
 ## 1.2.0
 
 ### Minor Changes
