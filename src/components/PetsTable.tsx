@@ -1,6 +1,6 @@
 /**
  * Tabla de mascotas con búsqueda, filtros por especie/estado y paginación.
- * Usa componentes UI compartidos (Table, ButtonGroup, Input, etc.).
+ * Usa DataTable de ui-components para renderizado desktop + cards en móvil.
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
@@ -23,61 +23,12 @@ const React = getHostReact();
 const UI = getHostUI();
 const { useState, useCallback, useMemo, useEffect } = React;
 
-type ColumnDef = {
-  key: string;
-  header: string;
-  render?: (item: Pet) => unknown;
-  className?: string;
-};
-
 const SORTABLE_KEYS = new Set(['name', 'species', 'breed', 'status', 'birth_date', 'created_at']);
-
-/** Todas las columnas posibles — se filtran según settings */
-const ALL_COLUMNS: ColumnDef[] = [
-  {
-    key: 'name',
-    header: 'Nombre',
-    render: (p) =>
-      React.createElement(
-        'div',
-        { className: 'flex items-center gap-2' },
-        React.createElement(UI.DynamicIcon, {
-          icon: SPECIES_ICON[p.species] ?? 'PawPrint',
-          size: 16,
-        }),
-        React.createElement('span', { className: 'font-medium' }, p.name)
-      ),
-  },
-  { key: 'species', header: 'Especie', render: (p) => formatSpecies(p.species) },
-  { key: 'breed', header: 'Raza', render: (p) => p.breed ?? '—' },
-  { key: 'sex', header: 'Sexo', render: (p) => (p.sex ? formatSex(p.sex) : '—') },
-  { key: 'birth_date', header: 'Edad', render: (p) => calculateAge(p.birth_date) || '—' },
-  { key: 'weight_kg', header: 'Peso', render: (p) => (p.weight_kg ? `${p.weight_kg} kg` : '—') },
-  { key: 'microchip_number', header: 'Microchip', render: (p) => p.microchip_number ?? '—' },
-  {
-    key: 'reproductive_status',
-    header: 'Reproductivo',
-    render: (p) => (p.reproductive_status ? formatReproductive(p.reproductive_status) : '—'),
-  },
-  {
-    key: 'status',
-    header: 'Estado',
-    render: (p) =>
-      React.createElement(
-        UI.Badge,
-        {
-          variant: p.status === 'active' ? 'success-soft' : 'secondary',
-          size: 'sm',
-        },
-        formatStatus(p.status)
-      ),
-  },
-];
 
 export function PetsTable(props: PetsTableProps) {
   const {
     filters: initialFilters,
-    columns,
+    columns: customColumns,
     extraColumns = [],
     extraActions = [],
     onRowClick,
@@ -89,18 +40,7 @@ export function PetsTable(props: PetsTableProps) {
 
   const { settings: pSettings } = usePatientsSettings();
 
-  const {
-    data,
-    loading,
-    error,
-    setFilters,
-    setSort,
-    pagination,
-    nextPage,
-    prevPage,
-    goToPage,
-    refetch,
-  } = usePets({
+  const { data, loading, error, setFilters, setSort, pagination, goToPage, refetch } = usePets({
     ...initialFilters,
     excludeStatus: pSettings.hideDeceased ? 'deceased' : undefined,
     pageSize,
@@ -126,14 +66,6 @@ export function PetsTable(props: PetsTableProps) {
     });
   }, [pSettings.hideDeceased]);
 
-  const hasActiveFilters =
-    searchValue !== '' || activeSpeciesFilter !== '' || activeStatusFilter !== '';
-
-  const allColumns = useMemo(
-    () => [...(columns ?? ALL_COLUMNS), ...extraColumns],
-    [columns, extraColumns]
-  );
-
   const speciesFilterOptions = useMemo(
     () => [
       '',
@@ -142,7 +74,7 @@ export function PetsTable(props: PetsTableProps) {
     [pSettings.enabledSpecies]
   );
 
-  // Centraliza la actualización de filtros evitando duplicación
+  // Centraliza la actualización de filtros
   const applyFilters = useCallback(
     (overrides: { query?: string; species?: string; status?: string }) => {
       const merged = {
@@ -154,7 +86,6 @@ export function PetsTable(props: PetsTableProps) {
         query: merged.query || undefined,
         species: merged.species || undefined,
         status: merged.status || undefined,
-        // Si no hay filtro de estado explícito y hideDeceased está activo, excluir fallecidos
         excludeStatus: !merged.status && pSettings.hideDeceased ? 'deceased' : undefined,
       });
     },
@@ -186,247 +117,203 @@ export function PetsTable(props: PetsTableProps) {
   );
 
   const handleSort = useCallback(
-    (key: string) => {
+    (key: string, direction: 'asc' | 'desc' | null) => {
       if (!SORTABLE_KEYS.has(key)) return;
-      const newDir: SortDirection = sortKey === key && sortDir === 'asc' ? 'desc' : 'asc';
-      setSortKey(key);
-      setSortDir(newDir);
-      setSort(key, newDir);
+      setSortKey(direction ? key : '');
+      setSortDir((direction ?? 'asc') as SortDirection);
+      setSort(key, direction ?? 'asc');
     },
-    [sortKey, sortDir, setSort]
+    [setSort]
   );
 
-  /** Retorna la dirección de sort para TableHead: undefined = no sortable, false = sortable sin orden */
-  function getSortDirection(colKey: string): 'asc' | 'desc' | false | undefined {
-    if (!SORTABLE_KEYS.has(colKey)) return undefined;
-    return sortKey === colKey ? (sortDir as 'asc' | 'desc') : false;
-  }
-
-  const totalColSpan = allColumns.length + (extraActions.length > 0 ? 1 : 0);
-
-  if (error) {
-    return React.createElement(UI.ErrorDisplay, {
-      title: 'Error',
-      message: error,
-      onRetry: () => refetch(),
-    });
-  }
-
-  return React.createElement(
-    'div',
-    { className: `flex flex-col gap-4 ${className}` },
-
-    // Barra de búsqueda y filtros
-    React.createElement(UI.FilterBar, {
-      searchValue,
-      onSearchChange: handleSearch,
-      searchPlaceholder: 'Buscar por nombre, raza, microchip...',
-      filterSections: [
-        {
-          label: 'Especie',
-          options: speciesFilterOptions.map((sp) => ({
-            value: sp,
-            label: sp === '' ? 'Todos' : formatSpecies(sp),
-          })),
-          value: activeSpeciesFilter,
-          onChange: handleSpeciesFilter,
-        },
-        {
-          label: 'Estado',
-          options: ['', 'active', 'deceased', 'referred', 'lost'].map((st) => ({
-            value: st,
-            label: st === '' ? 'Todos' : formatStatus(st),
-          })),
-          value: activeStatusFilter,
-          onChange: handleStatusFilter,
-        },
-      ],
-      hasActiveFilters,
-    }),
-
-    // Tabla
-    React.createElement(
-      UI.Table,
-      null,
-      // Header
-      React.createElement(
-        UI.TableHeader,
-        null,
-        React.createElement(
-          UI.TableRow,
-          null,
-          allColumns.map((col) =>
-            React.createElement(
-              UI.TableHead,
-              {
-                key: col.key,
-                sortDirection: getSortDirection(col.key),
-                onSort: () => handleSort(col.key),
-                className: col.className,
-              },
-              col.header
-            )
+  // Columnas para DataTable
+  const dtColumns = useMemo(() => {
+    const base = customColumns ?? [
+      {
+        key: 'name',
+        header: 'Nombre',
+        sortable: true,
+        render: (p: Pet) =>
+          React.createElement(
+            'div',
+            { className: 'flex items-center gap-2' },
+            React.createElement(UI.DynamicIcon, {
+              icon: SPECIES_ICON[p.species] ?? 'PawPrint',
+              size: 16,
+            }),
+            React.createElement('span', { className: 'font-medium' }, p.name)
           ),
-          extraActions.length > 0 &&
-            React.createElement(UI.TableHead, { className: 'w-24 text-right' }, 'Acciones')
-        )
-      ),
-      // Body
-      React.createElement(
-        UI.TableBody,
-        null,
-        loading
-          ? Array.from({ length: 5 }).map((_, i) =>
-              React.createElement(
-                UI.TableRow,
-                { key: `skeleton-${i}` },
-                Array.from({ length: totalColSpan }).map((_, j) =>
-                  React.createElement(
-                    UI.TableCell,
-                    { key: j },
-                    React.createElement(UI.Skeleton, { className: 'h-4' })
-                  )
-                )
-              )
-            )
-          : data.length === 0
-            ? React.createElement(
-                UI.TableRow,
-                null,
-                React.createElement(
-                  UI.TableCell,
-                  { colSpan: totalColSpan, className: 'p-0' },
-                  !hasActiveFilters && emptyStateAction
-                    ? React.createElement(UI.EmptyState, {
-                        title: 'No hay pacientes aún',
-                        description:
-                          'Agrega tu primer paciente para empezar a gestionar historiales y citas.',
-                        icon: React.createElement(UI.DynamicIcon, { icon: 'PawPrint', size: 24 }),
-                        action: emptyStateAction,
-                      })
-                    : React.createElement(UI.EmptyState, {
-                        title: emptyMessage,
-                        description: hasActiveFilters
-                          ? 'Prueba con otros términos o ajusta los filtros.'
-                          : undefined,
-                      })
-                )
-              )
-            : data.map((pet) =>
-                React.createElement(
-                  UI.TableRow,
-                  {
-                    key: pet.id,
-                    onClick: onRowClick ? () => onRowClick(pet) : undefined,
-                    className: onRowClick ? 'cursor-pointer' : '',
-                  },
-                  allColumns.map((col) =>
-                    React.createElement(
-                      UI.TableCell,
-                      { key: col.key, className: col.className },
-                      col.render
-                        ? (col.render(pet) as React.ReactNode)
-                        : (((pet as unknown as Record<string, unknown>)[
-                            col.key
-                          ] as React.ReactNode) ?? '—')
-                    )
-                  ),
-                  extraActions.length > 0 &&
-                    React.createElement(
-                      UI.TableCell,
-                      {
-                        className: 'text-right',
-                        onClick: (e: { stopPropagation: () => void }) => e.stopPropagation(),
-                      },
-                      React.createElement(
-                        'div',
-                        { className: 'flex items-center justify-end gap-1' },
-                        extraActions
-                          .filter((a) => !a.hidden || !a.hidden(pet))
-                          .map((action, i) =>
-                            React.createElement(
-                              UI.Button,
-                              {
-                                key: i,
-                                variant: action.variant === 'destructive' ? 'destructive' : 'ghost',
-                                size: 'xs',
-                                onClick: () => action.onClick(pet),
-                                title: action.label,
-                              },
-                              action.label
-                            )
-                          )
-                      )
-                    )
-                )
-              )
-      )
-    ),
+      },
+      {
+        key: 'species',
+        header: 'Especie',
+        sortable: true,
+        render: (p: Pet) => formatSpecies(p.species),
+      },
+      {
+        key: 'breed',
+        header: 'Raza',
+        sortable: true,
+        render: (p: Pet) => p.breed ?? '—',
+      },
+      {
+        key: 'sex',
+        header: 'Sexo',
+        render: (p: Pet) => (p.sex ? formatSex(p.sex) : '—'),
+      },
+      {
+        key: 'birth_date',
+        header: 'Edad',
+        sortable: true,
+        render: (p: Pet) => calculateAge(p.birth_date) || '—',
+      },
+      {
+        key: 'weight_kg',
+        header: 'Peso',
+        render: (p: Pet) => (p.weight_kg ? `${p.weight_kg} kg` : '—'),
+      },
+      {
+        key: 'microchip_number',
+        header: 'Microchip',
+        render: (p: Pet) => p.microchip_number ?? '—',
+      },
+      {
+        key: 'reproductive_status',
+        header: 'Reproductivo',
+        render: (p: Pet) =>
+          p.reproductive_status ? formatReproductive(p.reproductive_status) : '—',
+      },
+      {
+        key: 'status',
+        header: 'Estado',
+        sortable: true,
+        render: (p: Pet) =>
+          React.createElement(
+            UI.Badge,
+            {
+              variant: p.status === 'active' ? 'success-soft' : 'secondary',
+              size: 'sm',
+            },
+            formatStatus(p.status)
+          ),
+      },
+    ];
 
-    // Paginación
-    !loading &&
-      data.length > 0 &&
+    return [...base, ...extraColumns];
+  }, [customColumns, extraColumns]);
+
+  // Acciones para DataTable
+  const dtActions = useMemo(() => {
+    if (extraActions.length === 0) return undefined;
+    return extraActions.map((a) => ({
+      label: a.label,
+      onClick: a.onClick,
+      variant: a.variant as 'ghost' | 'destructive' | undefined,
+      hidden: a.hidden,
+    }));
+  }, [extraActions]);
+
+  // Mobile render: cada mascota como card
+  const mobileRender = useCallback(
+    (pet: Pet) =>
       React.createElement(
         'div',
-        { className: 'flex items-center justify-between text-sm text-cg-text-muted' },
+        { className: 'flex flex-col gap-1' },
+        // Nombre + icono
         React.createElement(
-          'span',
-          null,
-          `${(pagination.page - 1) * pagination.pageSize + 1}–${Math.min(pagination.page * pagination.pageSize, pagination.total)} de ${pagination.total}`
+          'div',
+          { className: 'flex items-center gap-2' },
+          React.createElement(UI.DynamicIcon, {
+            icon: SPECIES_ICON[pet.species] ?? 'PawPrint',
+            size: 18,
+          }),
+          React.createElement('span', { className: 'font-medium text-sm' }, pet.name)
         ),
+        // Especie · Raza
         React.createElement(
-          UI.Pagination,
-          null,
+          'div',
+          { className: 'text-xs', style: { color: 'var(--cg-text-muted)' } },
+          [formatSpecies(pet.species), pet.breed].filter(Boolean).join(' · ')
+        ),
+        // Edad · Sexo
+        React.createElement(
+          'div',
+          { className: 'text-xs', style: { color: 'var(--cg-text-muted)' } },
+          [calculateAge(pet.birth_date), pet.sex ? formatSex(pet.sex) : null]
+            .filter(Boolean)
+            .join(' · ') || '—'
+        ),
+        // Estado badge
+        React.createElement(
+          'div',
+          { className: 'mt-1' },
           React.createElement(
-            UI.PaginationContent,
-            null,
-            React.createElement(
-              UI.PaginationItem,
-              null,
-              React.createElement(UI.PaginationPrevious, {
-                onClick: prevPage,
-                disabled: pagination.page <= 1,
-              })
-            ),
-            ...buildPageNumbers(pagination.page, pagination.totalPages).map((item, i) =>
-              React.createElement(
-                UI.PaginationItem,
-                { key: i },
-                item === '...'
-                  ? React.createElement(UI.PaginationEllipsis)
-                  : React.createElement(
-                      UI.PaginationLink,
-                      {
-                        isActive: item === pagination.page,
-                        onClick: () => goToPage(item),
-                      },
-                      item
-                    )
-              )
-            ),
-            React.createElement(
-              UI.PaginationItem,
-              null,
-              React.createElement(UI.PaginationNext, {
-                onClick: nextPage,
-                disabled: pagination.page >= pagination.totalPages,
-              })
-            )
+            UI.Badge,
+            {
+              variant: pet.status === 'active' ? 'success-soft' : 'secondary',
+              size: 'sm',
+            },
+            formatStatus(pet.status)
           )
         )
-      )
+      ),
+    []
   );
-}
 
-/** Genera lista de números de página con elipsis para la paginación */
-function buildPageNumbers(current: number, total: number): Array<number | '...'> {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const pages: Array<number | '...'> = [1];
-  if (current > 3) pages.push('...');
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
-  for (let i = start; i <= end; i++) pages.push(i);
-  if (current < total - 2) pages.push('...');
-  pages.push(total);
-  return pages;
+  return React.createElement(UI.DataTable, {
+    data,
+    rowKey: (pet: Pet) => pet.id,
+    loading,
+    error: error ?? undefined,
+    onRetry: () => refetch(),
+    columns: dtColumns,
+    searchPlaceholder: 'Buscar por nombre, raza, microchip...',
+    searchValue,
+    onSearchChange: handleSearch,
+    filterSections: [
+      {
+        label: 'Especie',
+        options: speciesFilterOptions.map((sp) => ({
+          value: sp,
+          label: sp === '' ? 'Todos' : formatSpecies(sp),
+        })),
+        value: activeSpeciesFilter,
+        onChange: handleSpeciesFilter,
+      },
+      {
+        label: 'Estado',
+        options: ['', 'active', 'deceased', 'referred', 'lost'].map((st) => ({
+          value: st,
+          label: st === '' ? 'Todos' : formatStatus(st),
+        })),
+        value: activeStatusFilter,
+        onChange: handleStatusFilter,
+      },
+    ],
+    sortKey: sortKey || null,
+    sortDirection: sortDir as 'asc' | 'desc' | null,
+    onSortChange: handleSort,
+    pagination: {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      total: pagination.total,
+    },
+    onPageChange: goToPage,
+    actions: dtActions,
+    onRowClick,
+    emptyState: {
+      title: emptyStateAction ? 'No hay pacientes aún' : emptyMessage,
+      description: emptyStateAction
+        ? 'Agrega tu primer paciente para empezar a gestionar historiales y citas.'
+        : undefined,
+      icon: emptyStateAction
+        ? React.createElement(UI.DynamicIcon, { icon: 'PawPrint', size: 24 })
+        : undefined,
+      action: emptyStateAction,
+      filteredTitle: emptyMessage,
+      filteredDescription: 'Prueba con otros términos o ajusta los filtros.',
+    },
+    mobileRender,
+    className,
+  });
 }
