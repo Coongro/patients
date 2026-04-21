@@ -76,7 +76,6 @@ export class VetOwnerRepository {
       if (query) {
         const pattern = `%${query}%`;
         const searchCond = or(
-          ilike(vetOwnerTable.preferred_vet, pattern),
           ilike(vetOwnerTable.emergency_phone, pattern),
           ilike(vetOwnerTable.notes, pattern)
         );

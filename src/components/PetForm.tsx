@@ -6,6 +6,8 @@ import { DatePicker } from '@coongro/calendar';
 import { ContactPicker, ContactForm } from '@coongro/contacts';
 import type { Contact } from '@coongro/contacts';
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import { StaffPicker } from '@coongro/staff';
+import type { StaffMember } from '@coongro/staff';
 
 import { usePatientsSettings } from '../hooks/usePatientsSettings.js';
 import { usePet } from '../hooks/usePet.js';
@@ -416,14 +418,16 @@ export function PetForm(props: PetFormProps) {
             false,
             '+54 11 9999-0000'
           ),
-          renderField(
-            'Veterinario preferido',
-            'preferred_vet',
-            'text',
-            vetData,
-            handleVetChange,
-            false,
-            'Dr. García'
+          React.createElement(
+            'div',
+            { className: FIELD_CLASS },
+            renderLabel('Veterinario preferido'),
+            React.createElement(StaffPicker, {
+              value: (vetData.preferred_vet_staff_id as string | null) ?? null,
+              onChange: (member: StaffMember | null) =>
+                handleVetChange('preferred_vet_staff_id', member?.id ?? null),
+              placeholder: 'Buscar veterinario...',
+            })
           ),
           React.createElement(
             'div',
