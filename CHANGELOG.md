@@ -1,5 +1,11 @@
 # @coongro/patients
 
+## 1.3.0
+
+### Minor Changes
+
+- 51952e7: Migrate `preferred_vet` (free text) to `preferred_vet_staff_id` with `StaffPicker` + `StaffBadge` from `@coongro/staff`, consistent with consultations `vet_name → staff_id` migration.
+
 ## 1.2.1
 
 ### Patch Changes
