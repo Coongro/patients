@@ -4,6 +4,7 @@
  */
 import { ContactCard } from '@coongro/contacts';
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import { StaffBadge } from '@coongro/staff';
 
 import { usePatientsSettings } from '../hooks/usePatientsSettings.js';
 import { usePet } from '../hooks/usePet.js';
@@ -345,11 +346,15 @@ export function PetDetail(props: PetDetailProps) {
                   { className: 'text-cg-text' },
                   `Emergencia: ${vetOwner.emergency_phone}`
                 ),
-              vetOwner.preferred_vet &&
+              vetOwner.preferred_vet_staff_id &&
                 React.createElement(
-                  'span',
-                  { className: 'text-cg-text' },
-                  `Vet preferido: ${vetOwner.preferred_vet}`
+                  'div',
+                  { className: 'flex items-center gap-2 text-cg-text' },
+                  React.createElement('span', null, 'Vet preferido:'),
+                  React.createElement(StaffBadge, {
+                    staffId: vetOwner.preferred_vet_staff_id,
+                    variant: 'compact',
+                  })
                 ),
               vetOwner.referral_source &&
                 React.createElement(

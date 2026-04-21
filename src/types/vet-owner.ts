@@ -7,7 +7,7 @@ export type ReferralSource = 'referral' | 'google' | 'social' | 'walk_in' | 'oth
 export interface VetOwner {
   id: string;
   contact_id: string;
-  preferred_vet: string | null;
+  preferred_vet_staff_id: string | null;
   emergency_phone: string | null;
   referral_source: string | null;
   notes: string | null;
@@ -18,7 +18,7 @@ export interface VetOwner {
 export interface VetOwnerCreateData {
   id?: string;
   contact_id: string;
-  preferred_vet?: string | null;
+  preferred_vet_staff_id?: string | null;
   emergency_phone?: string | null;
   referral_source?: string | null;
   notes?: string | null;

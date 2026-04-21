@@ -39,6 +39,9 @@
       ],
       "@coongro/contacts/*": [
         "../contacts/dist/*"
+      ],
+      "@coongro/staff": [
+        "../staff/dist/index.d.ts"
       ]
     }
   },
