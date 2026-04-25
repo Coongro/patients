@@ -1,6 +1,6 @@
 {
   "id": "patients",
-  "version": "1.0.3",
+  "version": "1.3.0",
   "apiVersion": "2.0",
   "assets": {
     "styles": [
@@ -88,26 +88,19 @@
           "order": 10
         },
         {
-          "id": "patients.campos",
+          "id": "patients.registro",
           "group": "patients",
-          "label": "Campos",
+          "label": "Registro",
           "icon": "assets/icons/campos.svg",
           "order": 20
-        },
-        {
-          "id": "patients.tabla",
-          "group": "patients",
-          "label": "Tabla",
-          "icon": "assets/icons/tabla.svg",
-          "order": 30
         }
       ],
       "sections": [
         {
-          "id": "patients.general.main",
+          "id": "patients.general.species",
           "page": "patients.general",
-          "label": "General",
-          "order": 10,
+          "label": "Especies habilitadas",
+          "order": 5,
           "items": [
             {
               "key": "patients.species.dog",
@@ -116,9 +109,8 @@
               "description": "Habilitar especie Perro",
               "default": true,
               "tags": [
-                "patients",
-                "species",
-                "dog",
+                "pacientes",
+                "especie",
                 "perro"
               ]
             },
@@ -129,9 +121,8 @@
               "description": "Habilitar especie Gato",
               "default": true,
               "tags": [
-                "patients",
-                "species",
-                "cat",
+                "pacientes",
+                "especie",
                 "gato"
               ]
             },
@@ -142,9 +133,8 @@
               "description": "Habilitar especie Ave",
               "default": false,
               "tags": [
-                "patients",
-                "species",
-                "bird",
+                "pacientes",
+                "especie",
                 "ave"
               ]
             },
@@ -155,9 +145,8 @@
               "description": "Habilitar especie Reptil",
               "default": false,
               "tags": [
-                "patients",
-                "species",
-                "reptile",
+                "pacientes",
+                "especie",
                 "reptil"
               ]
             },
@@ -168,9 +157,8 @@
               "description": "Habilitar especie Roedor",
               "default": false,
               "tags": [
-                "patients",
-                "species",
-                "rodent",
+                "pacientes",
+                "especie",
                 "roedor"
               ]
             },
@@ -181,32 +169,55 @@
               "description": "Habilitar especie Otro (exóticos, etc.)",
               "default": true,
               "tags": [
-                "patients",
-                "species",
-                "other",
-                "otro"
+                "pacientes",
+                "especie",
+                "otro",
+                "exótico"
               ]
-            },
+            }
+          ]
+        },
+        {
+          "id": "patients.general.behavior",
+          "page": "patients.general",
+          "label": "Comportamiento",
+          "order": 10,
+          "items": [
             {
               "key": "patients.defaults.species",
               "type": "enum",
               "label": "Especie por defecto",
               "description": "Especie preseleccionada al crear un paciente",
-              "default": "dog",
+              "default": "Perro",
               "options": [
-                "dog",
-                "cat",
-                "bird",
-                "reptile",
-                "rodent",
-                "other"
+                {
+                  "value": "Perro",
+                  "icon": "Dog"
+                },
+                {
+                  "value": "Gato",
+                  "icon": "Cat"
+                },
+                {
+                  "value": "Ave",
+                  "icon": "Bird"
+                },
+                {
+                  "value": "Reptil",
+                  "icon": "Turtle"
+                },
+                {
+                  "value": "Roedor",
+                  "icon": "Rabbit"
+                },
+                {
+                  "value": "Otro",
+                  "icon": "PawPrint"
+                }
               ],
               "tags": [
-                "patients",
-                "defaults",
-                "species",
+                "pacientes",
                 "especie",
-                "por",
                 "defecto"
               ]
             },
@@ -214,171 +225,90 @@
               "key": "patients.behavior.openDetailOnCreate",
               "type": "boolean",
               "label": "Abrir ficha al crear",
-              "description": "Al crear un paciente, abrir automáticamente su ficha",
+              "description": "Al crear un paciente, abrir automáticamente su ficha de detalle",
               "default": true,
               "tags": [
-                "patients",
-                "behavior",
-                "opendetailoncreate",
+                "pacientes",
                 "abrir",
                 "ficha",
-                "crear"
+                "crear",
+                "detalle"
+              ]
+            },
+            {
+              "key": "patients.behavior.hideDeceased",
+              "type": "boolean",
+              "label": "Ocultar pacientes fallecidos",
+              "description": "Excluir pacientes fallecidos de la búsqueda y listado por defecto",
+              "default": true,
+              "tags": [
+                "pacientes",
+                "ocultar",
+                "fallecidos",
+                "muertos",
+                "busqueda"
+              ]
+            },
+            {
+              "key": "patients.behavior.showCompleteness",
+              "type": "boolean",
+              "label": "Indicador de completitud",
+              "description": "Mostrar qué porcentaje del perfil del paciente está completo",
+              "default": false,
+              "tags": [
+                "pacientes",
+                "completitud",
+                "perfil",
+                "porcentaje",
+                "completo"
               ]
             }
           ]
         },
         {
-          "id": "patients.campos.main",
-          "page": "patients.campos",
-          "label": "Campos",
+          "id": "patients.registro.required",
+          "page": "patients.registro",
+          "label": "Campos obligatorios",
           "order": 10,
           "items": [
-            {
-              "key": "patients.required.microchip",
-              "type": "boolean",
-              "label": "Microchip obligatorio",
-              "description": "Requerir número de microchip al crear paciente",
-              "default": false,
-              "tags": [
-                "patients",
-                "required",
-                "microchip",
-                "obligatorio"
-              ]
-            },
             {
               "key": "patients.required.sex",
               "type": "boolean",
               "label": "Sexo obligatorio",
-              "description": "Requerir sexo al crear paciente",
+              "description": "Requerir sexo al crear o editar un paciente",
               "default": false,
               "tags": [
-                "patients",
-                "required",
-                "sex",
+                "pacientes",
+                "obligatorio",
                 "sexo",
-                "obligatorio"
+                "requerir"
               ]
             },
             {
               "key": "patients.required.birthDate",
               "type": "boolean",
               "label": "Fecha de nacimiento obligatoria",
-              "description": "Requerir fecha de nacimiento al crear paciente",
+              "description": "Requerir fecha de nacimiento al crear o editar un paciente",
               "default": false,
               "tags": [
-                "patients",
-                "required",
-                "birthdate",
+                "pacientes",
+                "obligatorio",
                 "fecha",
                 "nacimiento",
-                "obligatoria"
-              ]
-            }
-          ]
-        },
-        {
-          "id": "patients.tabla.main",
-          "page": "patients.tabla",
-          "label": "Tabla",
-          "order": 10,
-          "items": [
-            {
-              "key": "patients.table.columns.breed",
-              "type": "boolean",
-              "label": "Raza",
-              "description": "Mostrar columna de raza",
-              "default": true,
-              "tags": [
-                "patients",
-                "table",
-                "columns",
-                "breed",
-                "raza"
+                "requerir"
               ]
             },
             {
-              "key": "patients.table.columns.sex",
+              "key": "patients.required.microchip",
               "type": "boolean",
-              "label": "Sexo",
-              "description": "Mostrar columna de sexo",
+              "label": "Microchip obligatorio",
+              "description": "Requerir número de microchip al crear o editar un paciente",
               "default": false,
               "tags": [
-                "patients",
-                "table",
-                "columns",
-                "sex",
-                "sexo"
-              ]
-            },
-            {
-              "key": "patients.table.columns.weight",
-              "type": "boolean",
-              "label": "Peso",
-              "description": "Mostrar columna de peso",
-              "default": false,
-              "tags": [
-                "patients",
-                "table",
-                "columns",
-                "weight",
-                "peso"
-              ]
-            },
-            {
-              "key": "patients.table.columns.microchip",
-              "type": "boolean",
-              "label": "Microchip",
-              "description": "Mostrar columna de microchip",
-              "default": false,
-              "tags": [
-                "patients",
-                "table",
-                "columns",
-                "microchip"
-              ]
-            },
-            {
-              "key": "patients.table.columns.status",
-              "type": "boolean",
-              "label": "Estado",
-              "description": "Mostrar columna de estado",
-              "default": true,
-              "tags": [
-                "patients",
-                "table",
-                "columns",
-                "status",
-                "estado"
-              ]
-            },
-            {
-              "key": "patients.table.columns.birthDate",
-              "type": "boolean",
-              "label": "Edad",
-              "description": "Mostrar columna de edad",
-              "default": true,
-              "tags": [
-                "patients",
-                "table",
-                "columns",
-                "birthdate",
-                "edad"
-              ]
-            },
-            {
-              "key": "patients.table.columns.reproductive",
-              "type": "boolean",
-              "label": "Estado reproductivo",
-              "description": "Mostrar columna de estado reproductivo",
-              "default": false,
-              "tags": [
-                "patients",
-                "table",
-                "columns",
-                "reproductive",
-                "estado",
-                "reproductivo"
+                "pacientes",
+                "obligatorio",
+                "microchip",
+                "requerir"
               ]
             }
           ]

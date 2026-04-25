@@ -31,11 +31,17 @@
       "@coongro/plugin-sdk/*": [
         "../../packages/plugin-sdk/dist/*"
       ],
+      "@coongro/calendar": [
+        "../calendar/dist/index.d.ts"
+      ],
       "@coongro/contacts": [
         "../contacts/dist/index.d.ts"
       ],
       "@coongro/contacts/*": [
         "../contacts/dist/*"
+      ],
+      "@coongro/staff": [
+        "../staff/dist/index.d.ts"
       ]
     }
   },

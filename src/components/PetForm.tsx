@@ -2,72 +2,75 @@
  * Formulario de crear/editar mascota.
  * Incluye ContactPicker de @coongro/contacts para seleccionar dueño.
  */
+import { DatePicker } from '@coongro/calendar';
 import { ContactPicker, ContactForm } from '@coongro/contacts';
 import type { Contact } from '@coongro/contacts';
-import { getHostReact, getHostUI, usePlugin } from '@coongro/plugin-sdk';
+import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import { StaffPicker } from '@coongro/staff';
+import type { StaffMember } from '@coongro/staff';
 
 import { usePatientsSettings } from '../hooks/usePatientsSettings.js';
 import { usePet } from '../hooks/usePet.js';
-import { usePetMutations } from '../hooks/usePetMutations.js';
-import { useVetOwnerMutations } from '../hooks/useVetOwnerMutations.js';
+import { usePetFormSubmit } from '../hooks/usePetFormSubmit.js';
 import type { PetFormProps } from '../types/components.js';
-import type { Pet, PetCreateData } from '../types/pet.js';
+import {
+  SPECIES_LABELS,
+  SPECIES_ICON,
+  REFERRAL_LABELS,
+  toSelectOptions,
+  SEX_LABELS,
+  STATUS_LABELS,
+  REPRODUCTIVE_LABELS,
+} from '../utils/labels.js';
 
 const React = getHostReact();
 const UI = getHostUI();
-const { useState, useEffect, useCallback } = React;
+const { useState, useEffect, useCallback, useRef } = React;
 
-const ALL_SPECIES_OPTIONS: Record<string, string> = {
-  dog: 'Perro',
-  cat: 'Gato',
-  bird: 'Ave',
-  reptile: 'Reptil',
-  rodent: 'Roedor',
-  other: 'Otro',
+const FIELD_CLASS = 'flex flex-col gap-1.5';
+const SEX_OPTIONS = toSelectOptions(SEX_LABELS);
+const STATUS_OPTIONS = toSelectOptions(STATUS_LABELS);
+const REPRODUCTIVE_OPTIONS = toSelectOptions(REPRODUCTIVE_LABELS);
+const REFERRAL_OPTIONS = toSelectOptions(REFERRAL_LABELS);
+
+const STATUS_ICON: Record<string, string> = {
+  active: 'CircleCheck',
+  deceased: 'CircleX',
+  referred: 'ArrowRightLeft',
+  lost: 'CircleAlert',
 };
 
-const SEX_OPTIONS = [
-  { label: 'Macho', value: 'male' },
-  { label: 'Hembra', value: 'female' },
-  { label: 'Desconocido', value: 'unknown' },
-];
+const REFERRAL_ICON: Record<string, string> = {
+  referral: 'UserPlus',
+  google: 'Search',
+  social: 'Share2',
+  walk_in: 'Store',
+  other: 'MoreHorizontal',
+};
 
-const STATUS_OPTIONS = [
-  { label: 'Activo', value: 'active' },
-  { label: 'Fallecido', value: 'deceased' },
-  { label: 'Derivado', value: 'referred' },
-  { label: 'Perdido', value: 'lost' },
-];
+const SEX_ICON: Record<string, string> = {
+  male: 'Mars',
+  female: 'Venus',
+  unknown: 'CircleHelp',
+};
 
-const REPRODUCTIVE_OPTIONS = [
-  { label: 'Entero/a', value: 'intact' },
-  { label: 'Castrado', value: 'neutered' },
-  { label: 'Esterilizada', value: 'spayed' },
-];
-
-const REFERRAL_OPTIONS = [
-  { label: 'Recomendación', value: 'referral' },
-  { label: 'Google', value: 'google' },
-  { label: 'Redes sociales', value: 'social' },
-  { label: 'Pasó por el local', value: 'walk_in' },
-  { label: 'Otro', value: 'other' },
-];
+const REPRODUCTIVE_ICON: Record<string, string> = {
+  intact: 'ShieldCheck',
+  neutered: 'Scissors',
+  spayed: 'Scissors',
+};
 
 export function PetForm(props: PetFormProps) {
   const { petId, defaults = {}, onSuccess, onCancel, className = '' } = props;
 
   const isEdit = !!petId;
   const { pet, loading: loadingPet } = usePet(petId);
-  const { create, update, creating, updating } = usePetMutations();
-  const { ensureOwner } = useVetOwnerMutations();
-  const { toast } = usePlugin();
   const { settings: pSettings } = usePatientsSettings();
+  const { submit, isSaving } = usePetFormSubmit({ petId, settings: pSettings, onSuccess });
 
-  // Opciones de especie filtradas según settings
-  const speciesOptions = pSettings.enabledSpecies.map((code) => ({
-    label: ALL_SPECIES_OPTIONS[code] ?? code,
-    value: code,
-  }));
+  const speciesOptions = toSelectOptions(SPECIES_LABELS).filter(
+    (opt) => pSettings.enabledSpecies[opt.value] !== false
+  );
 
   const [formData, setFormData] = useState<Record<string, unknown>>({
     species: pSettings.defaultSpecies,
@@ -83,9 +86,22 @@ export function PetForm(props: PetFormProps) {
   const [allergyInput, setAllergyInput] = useState('');
   const [chronicInput, setChronicInput] = useState('');
 
+  // Controla si el usuario ya cambió la especie manualmente
+  const userChangedSpecies = useRef(false);
+
   // Modal para crear contacto desde el picker
   const [showCreateContact, setShowCreateContact] = useState(false);
   const [createContactName, setCreateContactName] = useState('');
+
+  // Sincronizar especie por defecto cuando los settings cargan (solo en creación, si el usuario no cambió)
+  useEffect(() => {
+    if (!isEdit && pSettings.defaultSpecies && !userChangedSpecies.current) {
+      setFormData((prev) => ({
+        ...prev,
+        species: pSettings.defaultSpecies,
+      }));
+    }
+  }, [isEdit, pSettings.defaultSpecies]);
 
   useEffect(() => {
     if (isEdit && pet) {
@@ -149,91 +165,10 @@ export function PetForm(props: PetFormProps) {
   const handleSubmit = useCallback(
     async (e: { preventDefault: () => void }) => {
       e.preventDefault();
-
-      // Validaciones
-      const name = (formData.name as string)?.trim();
-      if (!name || name.length < 2) {
-        toast.error('Validación', 'El nombre debe tener al menos 2 caracteres');
-        return;
-      }
-
-      if (!formData.owner_id) {
-        toast.error('Validación', 'Debe seleccionar un dueño');
-        return;
-      }
-
-      if (pSettings.requireSex && !formData.sex) {
-        toast.error('Validación', 'Debe seleccionar el sexo');
-        return;
-      }
-
-      const birthDate = formData.birth_date as string;
-      if (pSettings.requireBirthDate && !birthDate) {
-        toast.error('Validación', 'Debe indicar la fecha de nacimiento');
-        return;
-      }
-      if (birthDate && new Date(birthDate) > new Date()) {
-        toast.error('Validación', 'La fecha de nacimiento no puede ser futura');
-        return;
-      }
-
-      if (pSettings.requireMicrochip && !formData.microchip_number) {
-        toast.error('Validación', 'Debe indicar el número de microchip');
-        return;
-      }
-
-      const weight = formData.weight_kg ? Number(formData.weight_kg) : null;
-      if (weight !== null && (weight <= 0 || weight >= 200)) {
-        toast.error('Validación', 'El peso debe ser positivo y menor a 200 kg');
-        return;
-      }
-
-      const allergies = (formData.allergies_list as string[])?.length
-        ? (formData.allergies_list as string[])
-        : null;
-      const chronicConditions = (formData.chronic_list as string[])?.length
-        ? (formData.chronic_list as string[])
-        : null;
-
-      const petData: PetCreateData = {
-        name,
-        species: formData.species as string,
-        breed: (formData.breed as string) || null,
-        sex: (formData.sex as string) || null,
-        color_markings: (formData.color_markings as string) || null,
-        birth_date: birthDate || null,
-        weight_kg: weight ? String(weight) : null,
-        microchip_number: (formData.microchip_number as string) || null,
-        owner_id: formData.owner_id as string,
-        photo_url: (formData.photo_url as string) || null,
-        status: (formData.status as string) || 'active',
-        reproductive_status: (formData.reproductive_status as string) || null,
-        allergies,
-        chronic_conditions: chronicConditions,
-        notes: (formData.notes as string) || null,
-        is_active: formData.is_active as boolean,
-      };
-
-      let result: Pet | null;
-      if (isEdit && petId) {
-        result = await update(petId, petData);
-      } else {
-        result = await create(petData);
-      }
-
-      if (result) {
-        // Guardar datos vet del dueño si hay algo
-        const hasVetData = Object.values(vetData).some((v) => v);
-        if (hasVetData) {
-          await ensureOwner(result.owner_id, vetData as Record<string, string>);
-        }
-        onSuccess?.(result);
-      }
+      await submit(formData, vetData);
     },
-    [formData, vetData, isEdit, petId, create, update, ensureOwner, onSuccess, toast]
+    [formData, vetData, submit]
   );
-
-  const isSaving = creating || updating;
 
   if (isEdit && loadingPet) {
     return React.createElement(
@@ -259,9 +194,10 @@ export function PetForm(props: PetFormProps) {
       // Sección 1: Dueño
       renderSection(
         'Dueño',
+        'User',
         React.createElement(
           'div',
-          { className: 'flex flex-col gap-1.5' },
+          { className: FIELD_CLASS },
           renderLabel('Dueño', true),
           React.createElement(ContactPicker, {
             placeholder: 'Buscar dueño...',
@@ -278,18 +214,79 @@ export function PetForm(props: PetFormProps) {
       // Sección 2: Datos de la mascota
       renderSection(
         'Datos de la mascota',
+        'PawPrint',
         renderField('Nombre', 'name', 'text', formData, handleChange, true, 'Nombre de la mascota'),
-        renderSelect('Especie', 'species', speciesOptions, formData, handleChange, true),
+        React.createElement(
+          'div',
+          { className: FIELD_CLASS },
+          renderLabel('Especie', true),
+          React.createElement(
+            UI.Select,
+            {
+              value: (formData.species as string) ?? '',
+              onValueChange: (v: string) => {
+                userChangedSpecies.current = true;
+                handleChange('species', v);
+              },
+              placeholder: 'Seleccionar...',
+              debounceMs: 0,
+            },
+            speciesOptions.map((opt) =>
+              React.createElement(
+                UI.SelectItem,
+                {
+                  key: opt.value,
+                  value: opt.value,
+                  icon: React.createElement(UI.DynamicIcon, {
+                    icon: SPECIES_ICON[opt.value] ?? 'PawPrint',
+                    size: 16,
+                  }),
+                },
+                opt.label
+              )
+            )
+          )
+        ),
         renderField('Raza', 'breed', 'text', formData, handleChange, false, 'Raza'),
-        renderSelect('Sexo', 'sex', SEX_OPTIONS, formData, handleChange, pSettings.requireSex),
-        renderField(
-          'Fecha nacimiento',
-          'birth_date',
-          'date',
-          formData,
-          handleChange,
-          pSettings.requireBirthDate,
-          ''
+        React.createElement(
+          'div',
+          { className: FIELD_CLASS },
+          renderLabel('Sexo', pSettings.requireSex),
+          React.createElement(
+            UI.Select,
+            {
+              value: (formData.sex as string) ?? '',
+              onValueChange: (v: string) => handleChange('sex', v),
+              placeholder: 'Seleccionar...',
+              clearable: !pSettings.requireSex,
+              debounceMs: 0,
+            },
+            SEX_OPTIONS.map((opt) =>
+              React.createElement(
+                UI.SelectItem,
+                {
+                  key: opt.value,
+                  value: opt.value,
+                  icon: React.createElement(UI.DynamicIcon, {
+                    icon: SEX_ICON[opt.value] ?? 'Circle',
+                    size: 16,
+                  }),
+                },
+                opt.label
+              )
+            )
+          )
+        ),
+        React.createElement(
+          'div',
+          { className: FIELD_CLASS },
+          renderLabel('Fecha nacimiento', pSettings.requireBirthDate),
+          React.createElement(DatePicker, {
+            value: (formData.birth_date as string) ?? '',
+            onChange: (date: string) => handleChange('birth_date', date),
+            maxDate: new Date().toISOString().slice(0, 10),
+            placeholder: 'Seleccionar fecha',
+          })
         ),
         renderField(
           'Color/Señas',
@@ -315,22 +312,73 @@ export function PetForm(props: PetFormProps) {
       // Sección 3: Estado
       renderSection(
         'Estado',
-        renderSelect('Estado', 'status', STATUS_OPTIONS, formData, handleChange),
-        renderSelect(
-          'Estado reproductivo',
-          'reproductive_status',
-          REPRODUCTIVE_OPTIONS,
-          formData,
-          handleChange
+        'Activity',
+        React.createElement(
+          'div',
+          { className: FIELD_CLASS },
+          renderLabel('Estado'),
+          React.createElement(
+            UI.Select,
+            {
+              value: (formData.status as string) ?? '',
+              onValueChange: (v: string) => handleChange('status', v),
+              placeholder: 'Seleccionar...',
+              debounceMs: 0,
+            },
+            STATUS_OPTIONS.map((opt) =>
+              React.createElement(
+                UI.SelectItem,
+                {
+                  key: opt.value,
+                  value: opt.value,
+                  icon: React.createElement(UI.DynamicIcon, {
+                    icon: STATUS_ICON[opt.value] ?? 'Circle',
+                    size: 16,
+                  }),
+                },
+                opt.label
+              )
+            )
+          )
+        ),
+        React.createElement(
+          'div',
+          { className: FIELD_CLASS },
+          renderLabel('Estado reproductivo'),
+          React.createElement(
+            UI.Select,
+            {
+              value: (formData.reproductive_status as string) ?? '',
+              onValueChange: (v: string) => handleChange('reproductive_status', v),
+              placeholder: 'Seleccionar...',
+              clearable: true,
+              debounceMs: 0,
+            },
+            REPRODUCTIVE_OPTIONS.map((opt) =>
+              React.createElement(
+                UI.SelectItem,
+                {
+                  key: opt.value,
+                  value: opt.value,
+                  icon: React.createElement(UI.DynamicIcon, {
+                    icon: REPRODUCTIVE_ICON[opt.value] ?? 'Circle',
+                    size: 16,
+                  }),
+                },
+                opt.label
+              )
+            )
+          )
         )
       ),
 
       // Sección 4: Alertas médicas
       renderSection(
         'Alertas médicas',
+        'AlertTriangle',
         React.createElement(
           'div',
-          { className: 'flex flex-col gap-1.5' },
+          { className: FIELD_CLASS },
           renderLabel('Alergias'),
           React.createElement(UI.ChipInput, {
             values: (formData.allergies_list as string[]) ?? [],
@@ -343,7 +391,7 @@ export function PetForm(props: PetFormProps) {
         ),
         React.createElement(
           'div',
-          { className: 'flex flex-col gap-1.5' },
+          { className: FIELD_CLASS },
           renderLabel('Condiciones crónicas'),
           React.createElement(UI.ChipInput, {
             values: (formData.chronic_list as string[]) ?? [],
@@ -360,6 +408,7 @@ export function PetForm(props: PetFormProps) {
       !isEdit &&
         renderSection(
           'Datos veterinarios del dueño',
+          'Stethoscope',
           renderField(
             'Tel. emergencia',
             'emergency_phone',
@@ -369,30 +418,55 @@ export function PetForm(props: PetFormProps) {
             false,
             '+54 11 9999-0000'
           ),
-          renderField(
-            'Veterinario preferido',
-            'preferred_vet',
-            'text',
-            vetData,
-            handleVetChange,
-            false,
-            'Dr. García'
+          React.createElement(
+            'div',
+            { className: FIELD_CLASS },
+            renderLabel('Veterinario preferido'),
+            React.createElement(StaffPicker, {
+              value: (vetData.preferred_vet_staff_id as string | null) ?? null,
+              onChange: (member: StaffMember | null) =>
+                handleVetChange('preferred_vet_staff_id', member?.id ?? null),
+              placeholder: 'Buscar veterinario...',
+            })
           ),
-          renderSelect(
-            'Cómo nos conoció',
-            'referral_source',
-            REFERRAL_OPTIONS,
-            vetData,
-            handleVetChange
+          React.createElement(
+            'div',
+            { className: FIELD_CLASS },
+            renderLabel('Cómo nos conoció'),
+            React.createElement(
+              UI.Select,
+              {
+                value: (vetData.referral_source as string) ?? '',
+                onValueChange: (v: string) => handleVetChange('referral_source', v),
+                placeholder: 'Seleccionar...',
+                clearable: true,
+                debounceMs: 0,
+              },
+              REFERRAL_OPTIONS.map((opt) =>
+                React.createElement(
+                  UI.SelectItem,
+                  {
+                    key: opt.value,
+                    value: opt.value,
+                    icon: React.createElement(UI.DynamicIcon, {
+                      icon: REFERRAL_ICON[opt.value] ?? 'MoreHorizontal',
+                      size: 16,
+                    }),
+                  },
+                  opt.label
+                )
+              )
+            )
           )
         ),
 
       // Sección 6: Notas
       renderSection(
         'Notas',
+        'FileText',
         React.createElement(
           'div',
-          { className: 'flex flex-col gap-1.5' },
+          { className: FIELD_CLASS },
           renderLabel('Notas'),
           React.createElement(UI.Textarea, {
             value: (formData.notes as string) ?? '',
@@ -451,13 +525,14 @@ export function PetForm(props: PetFormProps) {
 // --- Helpers de renderizado ---
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function renderSection(title: string, ...children: any[]) {
+function renderSection(title: string, icon: string, ...children: any[]) {
   return React.createElement(
     'div',
     { className: 'flex flex-col gap-3' },
     React.createElement(
       'h3',
-      { className: 'text-sm font-medium text-cg-text-muted uppercase tracking-wider' },
+      { className: 'flex items-center gap-2 text-sm font-medium text-cg-text-muted' },
+      React.createElement(UI.DynamicIcon, { icon, size: 14, className: 'text-cg-text-muted' }),
       title
     ),
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -485,7 +560,7 @@ function renderField(
 ) {
   return React.createElement(
     'div',
-    { className: 'flex flex-col gap-1.5' },
+    { className: FIELD_CLASS },
     renderLabel(label, required),
     React.createElement(UI.Input, {
       type,
@@ -495,33 +570,5 @@ function renderField(
       required,
       step: type === 'number' ? '0.1' : undefined,
     })
-  );
-}
-
-function renderSelect(
-  label: string,
-  key: string,
-  options: Array<{ label: string; value: string }>,
-  data: Record<string, unknown>,
-  onChange: (key: string, value: unknown) => void,
-  required = false
-) {
-  return React.createElement(
-    'div',
-    { className: 'flex flex-col gap-1.5' },
-    renderLabel(label, required),
-    React.createElement(
-      UI.Select,
-      {
-        value: (data[key] as string) ?? '',
-        onValueChange: (v: string) => onChange(key, v),
-        placeholder: 'Seleccionar...',
-        clearable: !required,
-        debounceMs: 0,
-      },
-      options.map((opt) =>
-        React.createElement(UI.SelectItem, { key: opt.value, value: opt.value }, opt.label)
-      )
-    )
   );
 }

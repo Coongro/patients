@@ -1,6 +1,6 @@
 {
   "name": "@coongro/patients",
-  "version": "1.0.3",
+  "version": "1.3.0",
   "type": "module",
   "description": "Bloque de gestión de pacientes veterinarios: mascotas, dueños y fichas clínicas",
   "main": "dist/index.js",
@@ -58,7 +58,9 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@coongro/contacts": ">=1.0.0"
+    "@coongro/calendar": ">=0.1.0",
+    "@coongro/contacts": ">=1.0.0",
+    "@coongro/staff": ">=0.1.0"
   },
   "peerDependencies": {
     "@coongro/plugin-sdk": ">=0.14.0"

@@ -14,7 +14,7 @@
 // NO exportar aquí: contienen imports de drizzle-orm que no corren en el browser
 export type { PetRow, NewPetRow } from './schema/pet.js';
 export type { VetOwnerRow, NewVetOwnerRow } from './schema/vet-owner.js';
-export type { PetSearchParams, CountResult } from './repositories/pet.repository.js';
+export type { CountResult } from './repositories/pet.repository.js';
 export type { VetOwnerSearchParams } from './repositories/vet-owner.repository.js';
 
 // Types
@@ -82,5 +82,5 @@ export {
   SEX_LABELS,
   REPRODUCTIVE_LABELS,
   REFERRAL_LABELS,
-  SPECIES_EMOJI,
+  SPECIES_ICON,
 } from './utils/labels.js';

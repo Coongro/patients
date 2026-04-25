@@ -5,6 +5,9 @@
 export const SPECIES_LABELS: Record<string, string> = {
   dog: 'Perro',
   cat: 'Gato',
+  bird: 'Ave',
+  reptile: 'Reptil',
+  rodent: 'Roedor',
   other: 'Otro',
 };
 
@@ -35,11 +38,22 @@ export const REFERRAL_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
-export const SPECIES_EMOJI: Record<string, string> = {
-  dog: '🐕',
-  cat: '🐈',
-  other: '🐾',
+/** Mapeo especie → nombre de icono Lucide (coherente con manifest settings) */
+export const SPECIES_ICON: Record<string, string> = {
+  dog: 'Dog',
+  cat: 'Cat',
+  bird: 'Bird',
+  reptile: 'Turtle',
+  rodent: 'Rabbit',
+  other: 'PawPrint',
 };
+
+/** Convierte un mapa de labels a opciones para Select */
+export function toSelectOptions(
+  labels: Record<string, string>
+): Array<{ label: string; value: string }> {
+  return Object.entries(labels).map(([value, label]) => ({ label, value }));
+}
 
 export function formatSpecies(species: string): string {
   return SPECIES_LABELS[species] ?? species;

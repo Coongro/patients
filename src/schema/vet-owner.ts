@@ -4,7 +4,7 @@ import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 export const vetOwnerTable = pgTable('module_patients_vet_owners', {
   id: uuid('id').primaryKey().notNull(),
   contact_id: text('contact_id').notNull(),
-  preferred_vet: text('preferred_vet'),
+  preferred_vet_staff_id: text('preferred_vet_staff_id'),
   emergency_phone: text('emergency_phone'),
   referral_source: text('referral_source'),
   notes: text('notes'),

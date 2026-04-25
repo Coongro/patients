@@ -1,5 +1,54 @@
 # @coongro/patients
 
+## 1.3.0
+
+### Minor Changes
+
+- 51952e7: Migrate `preferred_vet` (free text) to `preferred_vet_staff_id` with `StaffPicker` + `StaffBadge` from `@coongro/staff`, consistent with consultations `vet_name → staff_id` migration.
+
+## 1.2.1
+
+### Patch Changes
+
+- 5a4e395: fix: migrate PetsTable to DataTable with mobileRender for mobile card view
+
+## 1.2.0
+
+### Minor Changes
+
+- a110ea2: Use DatePicker from @coongro/calendar for birth date field
+
+## 1.1.2
+
+### Patch Changes
+
+- f247946: Add Lucide icons to species enum options in settings dropdown
+
+## 1.1.1
+
+### Patch Changes
+
+- ddb5b0d: Restore full species toggles and options in settings
+  - Restore 6 individual species toggles (dog, cat, bird, reptile, rodent, other) in manifest
+  - Restore all 6 options in default species enum (was reduced to only dog/cat)
+  - Update usePatientsSettings to expose enabledSpecies map
+  - Filter species options in PetForm and PetsTable by enabled species
+
+## 1.1.0
+
+### Minor Changes
+
+- 41013ee: Redesign settings with realistic veterinary configurations
+  - Add 7 realistic settings for veterinary clinics (Argentine market)
+  - General page: default species, open detail on create, hide deceased, profile completeness
+  - Registration page: required sex, birth date, and microchip fields
+  - Migrate to SDK useSettings for real-time reactivity
+  - Add excludeStatus filter for deceased patient filtering
+
+### Patch Changes
+
+- 6fc3ec3: Adopt core fixes: Avatar with icon prop, Mars/Venus gender icons, DynamicIcon species indicators
+
 ## 1.0.3
 
 ### Patch Changes

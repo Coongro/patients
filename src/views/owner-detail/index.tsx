@@ -4,6 +4,7 @@
 import { ContactDetail, ContactForm } from '@coongro/contacts';
 import type { Contact } from '@coongro/contacts';
 import { getHostReact, getHostUI, usePlugin } from '@coongro/plugin-sdk';
+import { StaffBadge } from '@coongro/staff';
 
 import { PetCard } from '../../components/PetCard.js';
 import { PetForm } from '../../components/PetForm.js';
@@ -80,7 +81,20 @@ export function OwnerDetailView(props: { contactId?: string }) {
               'div',
               { className: 'grid grid-cols-2 gap-3' },
               vetOwner.emergency_phone && renderField('Tel. emergencia', vetOwner.emergency_phone),
-              vetOwner.preferred_vet && renderField('Vet preferido', vetOwner.preferred_vet),
+              vetOwner.preferred_vet_staff_id &&
+                React.createElement(
+                  'div',
+                  { className: 'flex flex-col gap-0.5' },
+                  React.createElement(
+                    'span',
+                    { className: 'text-xs text-cg-text-muted' },
+                    'Vet preferido'
+                  ),
+                  React.createElement(StaffBadge, {
+                    staffId: vetOwner.preferred_vet_staff_id,
+                    variant: 'compact',
+                  })
+                ),
               vetOwner.referral_source &&
                 renderField('Llegó por', formatReferral(vetOwner.referral_source)),
               vetOwner.notes && renderField('Notas vet', vetOwner.notes)
@@ -126,7 +140,7 @@ export function OwnerDetailView(props: { contactId?: string }) {
     { className: 'font-inter min-h-screen bg-cg-bg-secondary p-6' },
     React.createElement(
       'div',
-      { className: 'max-w-3xl mx-auto flex flex-col gap-4' },
+      { className: 'w-full flex flex-col gap-4' },
       // Botón volver
       React.createElement(
         UI.Button,
