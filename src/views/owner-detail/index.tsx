@@ -1,7 +1,7 @@
 /**
  * Ficha del dueño. Usa ContactDetail de @coongro/contacts con secciones extra.
  */
-import { ContactDetail, ContactForm } from '@coongro/contacts';
+import { ContactDetail, ContactForm, useContactMutations } from '@coongro/contacts';
 import type { Contact } from '@coongro/contacts';
 import { getHostReact, getHostUI, usePlugin } from '@coongro/plugin-sdk';
 import { StaffBadge } from '@coongro/staff';
@@ -25,6 +25,8 @@ export function OwnerDetailView(props: { contactId?: string }) {
   const { vetOwner } = useVetOwner(contactId);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddPetModal, setShowAddPetModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Contact | null>(null);
+  const { softDelete: softDeleteContact, deleting } = useContactMutations();
 
   const handleBack = useCallback(() => {
     views.open('patients.owners.open');
@@ -33,6 +35,19 @@ export function OwnerDetailView(props: { contactId?: string }) {
   const handleEdit = useCallback(() => {
     setShowEditModal(true);
   }, []);
+
+  const handleDelete = useCallback((contact: Contact) => {
+    setConfirmDelete(contact);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!confirmDelete) return;
+    const ok = await softDeleteContact(confirmDelete.id);
+    if (ok) {
+      setConfirmDelete(null);
+      views.open('patients.owners.open');
+    }
+  }, [confirmDelete, softDeleteContact, views]);
 
   const handleEditSuccess = useCallback(
     (_contact: Contact) => {
@@ -157,41 +172,66 @@ export function OwnerDetailView(props: { contactId?: string }) {
         contactId,
         extraSections,
         onEdit: handleEdit,
+        onDelete: handleDelete,
       })
     ),
 
-    // Modal editar dueño
-    React.createElement(
-      UI.FormDialog,
-      {
-        open: showEditModal,
-        onOpenChange: setShowEditModal,
-        title: 'Editar dueño',
-        size: 'md',
-      },
-      React.createElement(ContactForm, {
-        contactId,
-        hiddenFields: ['type'],
-        onSuccess: handleEditSuccess,
-        onCancel: () => setShowEditModal(false),
-      })
-    ),
+    // Modal editar dueño con footer sticky
+    React.createElement(UI.FormDialogSubmit, {
+      open: showEditModal,
+      onOpenChange: setShowEditModal,
+      title: 'Editar dueño',
+      size: 'md',
+      submitLabel: 'Guardar cambios',
+      onCancel: () => setShowEditModal(false),
+      children: ({ formRef }: { formRef: React.RefObject<HTMLFormElement> }) =>
+        React.createElement(ContactForm, {
+          contactId,
+          hiddenFields: ['type'],
+          onSuccess: handleEditSuccess,
+          formRef,
+          hideActions: true,
+        }),
+    }),
 
-    // Modal agregar mascota
-    React.createElement(
-      UI.FormDialog,
-      {
-        open: showAddPetModal,
-        onOpenChange: setShowAddPetModal,
-        title: 'Nueva mascota',
-        size: 'lg',
+    // Modal agregar mascota con footer sticky
+    React.createElement(UI.FormDialogSubmit, {
+      open: showAddPetModal,
+      onOpenChange: setShowAddPetModal,
+      title: 'Nueva mascota',
+      size: 'lg',
+      submitLabel: 'Crear mascota',
+      onCancel: () => setShowAddPetModal(false),
+      children: ({ formRef }: { formRef: React.RefObject<HTMLFormElement> }) =>
+        React.createElement(PetForm, {
+          defaults: { owner_id: contactId },
+          onSuccess: handleAddPetSuccess,
+          formRef,
+          hideActions: true,
+        }),
+    }),
+
+    // Confirmar eliminación
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    React.createElement((UI as any).ConfirmDialog, {
+      open: !!confirmDelete,
+      onOpenChange: (open: boolean) => {
+        if (!open) setConfirmDelete(null);
       },
-      React.createElement(PetForm, {
-        defaults: { owner_id: contactId },
-        onSuccess: handleAddPetSuccess,
-        onCancel: () => setShowAddPetModal(false),
-      })
-    )
+      title: 'Eliminar dueño',
+      description: confirmDelete
+        ? React.createElement(
+            React.Fragment,
+            null,
+            '¿Eliminar a ',
+            React.createElement('strong', null, confirmDelete.name),
+            '?'
+          )
+        : '',
+      confirmLabel: 'Eliminar',
+      loading: deleting,
+      onConfirm: () => void handleConfirmDelete(),
+    })
   );
 }
 
