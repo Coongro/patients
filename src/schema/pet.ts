@@ -27,7 +27,8 @@ export const petTable = pgTable('module_patients_pets', {
     .default(sql`now()`),
   updated_at: timestamp('updated_at', { mode: 'string' })
     .notNull()
-    .default(sql`now()`),
+    .default(sql`now()`)
+    .$onUpdate(() => new Date().toISOString()),
 });
 
 export type PetRow = typeof petTable.$inferSelect;

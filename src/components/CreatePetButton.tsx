@@ -1,5 +1,5 @@
 /**
- * Botón para crear paciente. Abre un FormDialog con PetForm.
+ * Botón para crear paciente. Abre un FormDialogSubmit con PetForm.
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
@@ -22,6 +22,7 @@ export function CreatePetButton(props: CreatePetButtonProps) {
   } = props;
 
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleSuccess = useCallback(
     (pet: Pet) => {
@@ -50,20 +51,23 @@ export function CreatePetButton(props: CreatePetButtonProps) {
       label
     ),
 
-    // Modal
-    React.createElement(
-      UI.FormDialog,
-      {
-        open,
-        onOpenChange: setOpen,
-        title: label,
-        size: 'lg',
-      },
-      React.createElement(PetForm, {
-        defaults,
-        onSuccess: handleSuccess,
-        onCancel: () => setOpen(false),
-      })
-    )
+    // Modal con footer sticky vía FormDialogSubmit
+    React.createElement(UI.FormDialogSubmit, {
+      open,
+      onOpenChange: setOpen,
+      title: label,
+      size: 'lg',
+      submitLabel: 'Crear paciente',
+      onCancel: () => setOpen(false),
+      disabled: saving,
+      children: ({ formRef }: { formRef: React.RefObject<HTMLFormElement> }) =>
+        React.createElement(PetForm, {
+          defaults,
+          onSuccess: handleSuccess,
+          formRef,
+          hideActions: true,
+          onSavingChange: setSaving,
+        }),
+    })
   );
 }

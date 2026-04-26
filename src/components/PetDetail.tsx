@@ -153,8 +153,10 @@ export function PetDetail(props: PetDetailProps) {
             UI.Button,
             {
               variant: 'outline',
+              size: 'sm',
               onClick: () => onEdit(pet),
             },
+            React.createElement(UI.DynamicIcon, { icon: 'Pencil', size: 14 }),
             'Editar'
           ),
         onDelete &&
@@ -162,8 +164,10 @@ export function PetDetail(props: PetDetailProps) {
             UI.Button,
             {
               variant: 'destructive',
+              size: 'sm',
               onClick: () => onDelete(pet),
             },
+            React.createElement(UI.DynamicIcon, { icon: 'Trash2', size: 14 }),
             'Eliminar'
           ),
         extraActions.map((action, i) =>
@@ -171,9 +175,11 @@ export function PetDetail(props: PetDetailProps) {
             UI.Button,
             {
               key: i,
-              variant: 'outline',
+              variant: action.variant ?? 'default',
+              size: 'sm',
               onClick: () => action.onClick(pet),
             },
+            action.icon && React.createElement(UI.DynamicIcon, { icon: action.icon, size: 14 }),
             action.label
           )
         )
@@ -416,13 +422,21 @@ export function PetDetail(props: PetDetailProps) {
 
     // Metadata
     React.createElement(
-      'div',
-      { className: 'text-xs text-cg-text-subtle flex gap-4' },
-      React.createElement('span', null, `Creado: ${new Date(pet.created_at).toLocaleDateString()}`),
+      UI.Card,
+      { className: 'p-4 w-fit' },
       React.createElement(
-        'span',
-        null,
-        `Actualizado: ${new Date(pet.updated_at).toLocaleDateString()}`
+        'div',
+        { className: 'flex flex-col gap-1 text-xs text-cg-text-muted' },
+        React.createElement(
+          'span',
+          null,
+          `Creado: ${new Date(pet.created_at).toLocaleDateString('es-AR')}`
+        ),
+        React.createElement(
+          'span',
+          null,
+          `Actualizado: ${new Date(pet.updated_at).toLocaleDateString('es-AR')}`
+        )
       )
     )
   );

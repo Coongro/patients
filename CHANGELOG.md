@@ -1,5 +1,16 @@
 # @coongro/patients
 
+## 1.4.0
+
+### Minor Changes
+
+- 361a25e: fix(detail-views): patient-detail's delete now actually deletes (was just a toast); owner-detail gains delete handler (was missing). Both migrated to UI.ConfirmDialog and edit dialogs migrated to UI.FormDialogSubmit. PetDetail timestamps wrapped in compact Card with es-AR locale. PetDetail extraActions honor variant/icon. pet schema updated_at uses .$onUpdate() (COONG-112)
+- 361a25e: refactor(ui): adopt FormSection + FormDialogSubmit from `@coongro/ui-components` 0.28.0 (COONG-112)
+  - `PetForm` ahora envuelve cada sección (Dueño, Datos de la mascota, Estado, Alertas médicas, Datos veterinarios del dueño, Notas) en `UI.FormSection` (Card + ícono + título). El helper local `renderSection` ahora delega a `UI.FormSection`.
+  - `CreatePetButton` migra a `UI.FormDialogSubmit`: footer sticky con botones Cancelar/Crear paciente.
+  - El dialog interno de "Nuevo dueño" (creación rápida desde el ContactPicker) también migra a `UI.FormDialogSubmit`.
+  - `PetFormProps` extendida con `formRef`, `hideActions`, `onSavingChange`. Compatible hacia atrás.
+
 ## 1.3.0
 
 ### Minor Changes

@@ -61,12 +61,25 @@ const REPRODUCTIVE_ICON: Record<string, string> = {
 };
 
 export function PetForm(props: PetFormProps) {
-  const { petId, defaults = {}, onSuccess, onCancel, className = '' } = props;
+  const {
+    petId,
+    defaults = {},
+    onSuccess,
+    onCancel,
+    className = '',
+    formRef,
+    hideActions,
+    onSavingChange,
+  } = props;
 
   const isEdit = !!petId;
   const { pet, loading: loadingPet } = usePet(petId);
   const { settings: pSettings } = usePatientsSettings();
   const { submit, isSaving } = usePetFormSubmit({ petId, settings: pSettings, onSuccess });
+
+  useEffect(() => {
+    onSavingChange?.(isSaving);
+  }, [isSaving, onSavingChange]);
 
   const speciesOptions = toSelectOptions(SPECIES_LABELS).filter(
     (opt) => pSettings.enabledSpecies[opt.value] !== false
@@ -189,9 +202,8 @@ export function PetForm(props: PetFormProps) {
 
     React.createElement(
       'form',
-      { onSubmit: handleSubmit, className: `flex flex-col gap-6 ${className}` },
+      { ref: formRef, onSubmit: handleSubmit, className: `flex flex-col gap-4 ${className}` },
 
-      // Sección 1: Dueño
       renderSection(
         'Dueño',
         'User',
@@ -477,48 +489,50 @@ export function PetForm(props: PetFormProps) {
         )
       ),
 
-      // Acciones
-      React.createElement(
-        'div',
-        { className: 'flex gap-3 pt-2' },
+      // Acciones (solo si el caller no las pone en el footer del dialog)
+      !hideActions &&
         React.createElement(
-          UI.Button,
-          {
-            type: 'submit',
-            disabled: isSaving || !formData.name || !formData.owner_id,
-            className: 'flex-1',
-          },
-          isSaving ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear paciente'
-        ),
-        onCancel &&
+          'div',
+          { className: 'flex gap-3 pt-2' },
           React.createElement(
             UI.Button,
             {
-              type: 'button',
-              variant: 'outline',
-              onClick: onCancel,
+              type: 'submit',
+              disabled: isSaving || !formData.name || !formData.owner_id,
+              className: 'flex-1',
             },
-            'Cancelar'
-          )
-      )
+            isSaving ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear paciente'
+          ),
+          onCancel &&
+            React.createElement(
+              UI.Button,
+              {
+                type: 'button',
+                variant: 'outline',
+                onClick: onCancel,
+              },
+              'Cancelar'
+            )
+        )
     ), // cierre del form
 
-    // Modal para crear contacto nuevo
-    React.createElement(
-      UI.FormDialog,
-      {
-        open: showCreateContact,
-        onOpenChange: setShowCreateContact,
-        title: 'Nuevo dueño',
-        size: 'md',
-      },
-      React.createElement(ContactForm, {
-        defaults: { name: createContactName, type: 'person' },
-        hiddenFields: ['type'],
-        onSuccess: handleContactCreated,
-        onCancel: () => setShowCreateContact(false),
-      })
-    )
+    // Modal para crear contacto nuevo (con footer sticky)
+    React.createElement(UI.FormDialogSubmit, {
+      open: showCreateContact,
+      onOpenChange: setShowCreateContact,
+      title: 'Nuevo dueño',
+      size: 'md',
+      submitLabel: 'Crear contacto',
+      onCancel: () => setShowCreateContact(false),
+      children: ({ formRef: contactFormRef }: { formRef: React.RefObject<HTMLFormElement> }) =>
+        React.createElement(ContactForm, {
+          defaults: { name: createContactName, type: 'person' },
+          hiddenFields: ['type'],
+          onSuccess: handleContactCreated,
+          formRef: contactFormRef,
+          hideActions: true,
+        }),
+    })
   );
 }
 
@@ -526,18 +540,8 @@ export function PetForm(props: PetFormProps) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function renderSection(title: string, icon: string, ...children: any[]) {
-  return React.createElement(
-    'div',
-    { className: 'flex flex-col gap-3' },
-    React.createElement(
-      'h3',
-      { className: 'flex items-center gap-2 text-sm font-medium text-cg-text-muted' },
-      React.createElement(UI.DynamicIcon, { icon, size: 14, className: 'text-cg-text-muted' }),
-      title
-    ),
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    ...children
-  );
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  return React.createElement(UI.FormSection, { icon, title }, ...children);
 }
 
 function renderLabel(label: string, required = false) {

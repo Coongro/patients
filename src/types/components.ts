@@ -3,7 +3,7 @@
  * Reutiliza ColumnDef, ActionDef, etc. de @coongro/contacts.
  */
 import type { ColumnDef, ActionDef, FieldDef, SectionDef, StatDef } from '@coongro/contacts';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 import type { PetFilters } from './filters.js';
 import type { Pet, PetCreateData } from './pet.js';
@@ -38,6 +38,12 @@ export interface PetFormProps {
   onSuccess?: (pet: Pet) => void;
   onCancel?: () => void;
   className?: string;
+  /** Ref al elemento <form>. El caller puede disparar submit con `formRef.current?.requestSubmit()` */
+  formRef?: Ref<HTMLFormElement>;
+  /** Si es true, el form no renderiza sus propios botones (los pone el caller en el footer del dialog) */
+  hideActions?: boolean;
+  /** Notifica al caller cuando cambia el estado de guardado */
+  onSavingChange?: (saving: boolean) => void;
 }
 
 // ---------------------------------------------------------------------------
