@@ -58,6 +58,26 @@ const DEFAULTS: Record<string, unknown> = {
   'patients.required.microchip': false,
 };
 
+/**
+ * Resuelve la especie por defecto garantizando que esté habilitada.
+ * Si la especie configurada está deshabilitada (o no mapea a ningún código),
+ * cae a la PRIMERA especie habilitada para que el Select de creación nunca
+ * arranque vacío. Si no hay ninguna habilitada, devuelve '' (comportamiento
+ * defensivo: el form muestra placeholder y obliga a elegir, en vez de
+ * preseleccionar una especie inválida).
+ */
+function resolveDefaultSpecies(
+  configured: string | undefined,
+  enabledSpecies: Record<string, boolean>
+): string {
+  const code = SPECIES_LABEL_TO_CODE[String(configured)];
+  if (code && enabledSpecies[code]) {
+    return code;
+  }
+  const firstEnabled = SPECIES_KEYS.find((sp) => enabledSpecies[sp]);
+  return firstEnabled ?? '';
+}
+
 function parseSettings(raw: Record<string, unknown>): PatientsSettings {
   const get = (key: string) => raw[key] ?? DEFAULTS[key];
 
@@ -71,7 +91,7 @@ function parseSettings(raw: Record<string, unknown>): PatientsSettings {
 
   return {
     enabledSpecies,
-    defaultSpecies: SPECIES_LABEL_TO_CODE[String(get('patients.defaults.species'))] ?? 'dog',
+    defaultSpecies: resolveDefaultSpecies(String(get('patients.defaults.species')), enabledSpecies),
     openDetailOnCreate: toBool(get('patients.behavior.openDetailOnCreate'), true),
     hideDeceased: toBool(get('patients.behavior.hideDeceased'), true),
     showCompleteness: toBool(get('patients.behavior.showCompleteness'), false),
