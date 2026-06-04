@@ -3,7 +3,7 @@
  * Usa ContactCard de @coongro/contacts para la sección del dueño.
  */
 import { ContactCard } from '@coongro/contacts';
-import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
+import { getHostReact, getHostUI, useViewContributions } from '@coongro/plugin-sdk';
 import { StaffBadge } from '@coongro/staff';
 
 import { usePatientsSettings } from '../hooks/usePatientsSettings.js';
@@ -81,6 +81,13 @@ export function PetDetail(props: PetDetailProps) {
   const { vetOwner } = useVetOwner(pet?.owner_id);
   const { pets: siblingPets } = usePetsByOwner(pet?.owner_id);
 
+  // Secciones que otros plugins inyectan en la ficha (ej. Vacunación, farmacia).
+  // Patrón estándar del SDK para esta vista — no requiere override.
+  const { sections: contributedSections } = useViewContributions('patients.detail.open', {
+    petId,
+    pet,
+  });
+
   // Filtrar la mascota actual de los hermanos
   const otherPets = siblingPets.filter((p) => p.id !== petId);
 
@@ -124,7 +131,9 @@ export function PetDetail(props: PetDetailProps) {
 
   const infoFields = getInfoFields(pet);
 
-  const sortedSections = [...extraSections].sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
+  const sortedSections = [...extraSections, ...contributedSections].sort(
+    (a, b) => (a.order ?? 50) - (b.order ?? 50)
+  );
 
   return React.createElement(
     'div',

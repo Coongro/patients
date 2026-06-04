@@ -69,6 +69,10 @@ export { PetPicker } from './components/PetPicker.js';
 export { PetStats } from './components/PetStats.js';
 export { CreatePetButton } from './components/CreatePetButton.js';
 
+// Settings
+export { usePatientsSettings } from './hooks/usePatientsSettings.js';
+export type { PatientsSettings } from './hooks/usePatientsSettings.js';
+
 // Utils
 export { calculateAge } from './utils/age.js';
 export {
