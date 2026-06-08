@@ -181,7 +181,7 @@ export function PetsTable(props: PetsTableProps) {
         key: 'reproductive_status',
         header: 'Reproductivo',
         render: (p: Pet) =>
-          p.reproductive_status ? formatReproductive(p.reproductive_status) : '—',
+          p.reproductive_status ? formatReproductive(p.reproductive_status, p.sex) : '—',
       },
       {
         key: 'status',
