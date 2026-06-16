@@ -12,12 +12,22 @@ export interface PetStatsData {
   byStatus: Array<{ label: string; count: number }>;
 }
 
-export function usePetStats(): {
+export interface UsePetStatsOptions {
+  /**
+   * Excluye pacientes fallecidos de los conteos, igual que el listado los
+   * oculta cuando el setting `hideDeceased` está activo. Mantener el mismo
+   * criterio evita que el Total / KPI "Activos" del dashboard se infle.
+   */
+  excludeDeceased?: boolean;
+}
+
+export function usePetStats(options: UsePetStatsOptions = {}): {
   stats: PetStatsData | null;
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
 } {
+  const { excludeDeceased = false } = options;
   const [stats, setStats] = useState<PetStatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +45,12 @@ export function usePetStats(): {
     setError(null);
     try {
       const [bySpecies, byStatus] = await Promise.all([
-        actions.execute<Array<{ label: string; count: number }>>('patients.pets.countBySpecies'),
-        actions.execute<Array<{ label: string; count: number }>>('patients.pets.countByStatus'),
+        actions.execute<Array<{ label: string; count: number }>>('patients.pets.countBySpecies', {
+          excludeDeceased,
+        }),
+        actions.execute<Array<{ label: string; count: number }>>('patients.pets.countByStatus', {
+          excludeDeceased,
+        }),
       ]);
 
       if (!mountedRef.current) return;
@@ -50,7 +64,7 @@ export function usePetStats(): {
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }, []);
+  }, [excludeDeceased]);
 
   useEffect(() => {
     void fetch();

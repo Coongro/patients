@@ -58,6 +58,7 @@ export function OwnersListView() {
           <div className="w-48">
             <CreateContactButton
               label="Nuevo dueño"
+              submitLabel="Crear dueño"
               defaults={{ type: 'person' }}
               onSuccess={handleOwnerCreated}
             />

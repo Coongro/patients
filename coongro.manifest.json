@@ -83,8 +83,8 @@
         {
           "id": "patients.general",
           "group": "patients",
-          "label": "General",
-          "icon": "assets/icons/general.svg",
+          "label": "Especies y ficha",
+          "icon": "assets/icons/paw.svg",
           "order": 10
         },
         {

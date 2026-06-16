@@ -68,8 +68,15 @@ export function formatSex(sex: string | null): string {
   return SEX_LABELS[sex] ?? sex;
 }
 
-export function formatReproductive(status: string | null): string {
+export function formatReproductive(status: string | null, sex?: string | null): string {
   if (!status) return '';
+  // Esterilizado: el label depende del SEXO, no del valor guardado (neutered/spayed). Así un
+  // macho no aparece como "Esterilizada" si el dato quedó en 'spayed' (la vet marcó este caso).
+  if (status === 'neutered' || status === 'spayed') {
+    if (sex === 'male') return 'Castrado';
+    if (sex === 'female') return 'Esterilizada';
+    return 'Esterilizado/a';
+  }
   return REPRODUCTIVE_LABELS[status] ?? status;
 }
 
