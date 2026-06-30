@@ -81,10 +81,14 @@ export {
   formatSex,
   formatReproductive,
   formatReferral,
+  SPECIES,
   SPECIES_LABELS,
+  SPECIES_ENABLED_DEFAULT,
+  speciesCodeFromText,
   STATUS_LABELS,
   SEX_LABELS,
   REPRODUCTIVE_LABELS,
   REFERRAL_LABELS,
   SPECIES_ICON,
 } from './utils/labels.js';
+export type { SpeciesDef } from './utils/labels.js';

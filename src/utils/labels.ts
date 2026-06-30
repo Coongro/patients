@@ -2,14 +2,60 @@
  * Labels de dominio para la UI.
  */
 
-export const SPECIES_LABELS: Record<string, string> = {
-  dog: 'Perro',
-  cat: 'Gato',
-  bird: 'Ave',
-  reptile: 'Reptil',
-  rodent: 'Roedor',
-  other: 'Otro',
+/**
+ * Taxonomía de especies — **fuente única** del sistema (COONG-225 #9).
+ *
+ * Pacientes es el dueño de la taxonomía; vet-pharmacy y vaccination la duplicaban
+ * (lista + normalizador). Ahora la importan de `@coongro/patients`. Los maps de
+ * label/icon se DERIVAN de acá para que no haya copias que se desincronicen.
+ */
+export interface SpeciesDef {
+  /** Código interno persistido (dog, cat, …). */
+  code: string;
+  /** Etiqueta en español. */
+  label: string;
+  /** Nombre de icono Lucide. */
+  icon: string;
+}
+
+export const SPECIES: readonly SpeciesDef[] = [
+  { code: 'dog', label: 'Perro', icon: 'Dog' },
+  { code: 'cat', label: 'Gato', icon: 'Cat' },
+  { code: 'bird', label: 'Ave', icon: 'Bird' },
+  { code: 'reptile', label: 'Reptil', icon: 'Turtle' },
+  { code: 'rodent', label: 'Roedor', icon: 'Rabbit' },
+  { code: 'other', label: 'Otro', icon: 'PawPrint' },
+];
+
+export const SPECIES_LABELS: Record<string, string> = Object.fromEntries(
+  SPECIES.map((s) => [s.code, s.label])
+);
+
+/** Defaults de especies habilitadas (alineado con el manifest de settings). */
+export const SPECIES_ENABLED_DEFAULT: Record<string, boolean> = {
+  dog: true,
+  cat: true,
+  bird: false,
+  reptile: false,
+  rodent: false,
+  other: true,
 };
+
+/**
+ * Normaliza un texto libre de especie (taxonomía SENASA en mayúscula/plural,
+ * "canino"/"felino"/ganado, etc.) al código interno de Pacientes. El ganado
+ * (bovino/equino/porcino/ovino) no tiene equivalente de mascota → 'other'.
+ * Reemplaza el `senasaSpeciesToCode` que vet-pharmacy y vaccination duplicaban.
+ */
+export function speciesCodeFromText(raw: string): string {
+  const t = raw.toLowerCase();
+  if (t.includes('canino') || t.includes('perro')) return 'dog';
+  if (t.includes('felino') || t.includes('gato')) return 'cat';
+  if (t.includes('ave') || t.includes('avi')) return 'bird';
+  if (t.includes('reptil')) return 'reptile';
+  if (t.includes('roedor')) return 'rodent';
+  return 'other';
+}
 
 export const STATUS_LABELS: Record<string, string> = {
   active: 'Activo',
@@ -38,15 +84,10 @@ export const REFERRAL_LABELS: Record<string, string> = {
   other: 'Otro',
 };
 
-/** Mapeo especie → nombre de icono Lucide (coherente con manifest settings) */
-export const SPECIES_ICON: Record<string, string> = {
-  dog: 'Dog',
-  cat: 'Cat',
-  bird: 'Bird',
-  reptile: 'Turtle',
-  rodent: 'Rabbit',
-  other: 'PawPrint',
-};
+/** Mapeo especie → nombre de icono Lucide. Derivado de SPECIES (fuente única). */
+export const SPECIES_ICON: Record<string, string> = Object.fromEntries(
+  SPECIES.map((s) => [s.code, s.icon])
+);
 
 /** Convierte un mapa de labels a opciones para Select */
 export function toSelectOptions(
