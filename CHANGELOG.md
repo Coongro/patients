@@ -1,5 +1,39 @@
 # @coongro/patients
 
+## 1.5.0
+
+### Minor Changes
+
+- dd0c8b3: feat(COONG-208): rediseño de ficha de Paciente y de Dueño
+
+  - Ficha de Paciente (`PetDetail`): header de identidad por especie con paleta,
+    chips vitales, banner de estado, alertas médicas, grilla de info con iconos,
+    panel del dueño y secciones de módulos inyectados. Layout responsive por JS
+    (no depende del CSS del plugin) para evitar la carrera de carga.
+  - Ficha de Dueño (`owner-detail`): vista propia con card de identidad + riel de
+    contacto, "Sus mascotas" (petcards con paleta), "Datos veterinarios" y notas.
+  - Tokens semánticos `cg-*` (dark mode), iconos Lucide coherentes.
+
+- 3f88db5: feat(COONG-225 #9): exporta la taxonomía de especies como fuente única
+
+  Pacientes es el dueño de la taxonomía de especies, pero vet-pharmacy y vaccination
+  la duplicaban (lista de especies, labels/iconos y el normalizador de texto SENASA).
+  Ahora se exporta todo desde `@coongro/patients` para consumir sin copiar:
+
+  - `SPECIES` (array `{code,label,icon}`) + tipo `SpeciesDef` — fuente única; los
+    maps `SPECIES_LABELS`/`SPECIES_ICON` se derivan de ahí.
+  - `SPECIES_ENABLED_DEFAULT` — defaults de especies habilitadas.
+  - `speciesCodeFromText(raw)` — normaliza texto libre/SENASA (canino, felino, ganado…)
+    al código interno; reemplaza el `senasaSpeciesToCode` duplicado en otros plugins.
+
+- 200786d: fix(detail-views): patient-detail's delete now actually deletes (was just a toast); owner-detail gains delete handler (was missing). Both migrated to UI.ConfirmDialog and edit dialogs migrated to UI.FormDialogSubmit. PetDetail timestamps wrapped in compact Card with es-AR locale. PetDetail extraActions honor variant/icon. pet schema updated_at uses .$onUpdate() (COONG-112)
+- 200786d: refactor(ui): adopt FormSection + FormDialogSubmit from `@coongro/ui-components` 0.28.0 (COONG-112)
+
+  - `PetForm` ahora envuelve cada sección (Dueño, Datos de la mascota, Estado, Alertas médicas, Datos veterinarios del dueño, Notas) en `UI.FormSection` (Card + ícono + título). El helper local `renderSection` ahora delega a `UI.FormSection`.
+  - `CreatePetButton` migra a `UI.FormDialogSubmit`: footer sticky con botones Cancelar/Crear paciente.
+  - El dialog interno de "Nuevo dueño" (creación rápida desde el ContactPicker) también migra a `UI.FormDialogSubmit`.
+  - `PetFormProps` extendida con `formRef`, `hideActions`, `onSavingChange`. Compatible hacia atrás.
+
 ## 1.4.0
 
 ### Minor Changes
