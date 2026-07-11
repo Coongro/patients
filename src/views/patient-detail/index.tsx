@@ -65,7 +65,7 @@ export function PatientDetailView(props: { petId?: string }) {
 
   return React.createElement(
     'div',
-    { className: 'font-inter min-h-screen bg-cg-bg-secondary p-6' },
+    { className: 'font-sans min-h-screen bg-cg-bg-secondary p-6' },
     React.createElement(
       'div',
       { className: 'w-full' },
