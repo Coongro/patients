@@ -69,6 +69,10 @@ export { PetPicker } from './components/PetPicker.js';
 export { PetStats } from './components/PetStats.js';
 export { CreatePetButton } from './components/CreatePetButton.js';
 
+// Settings
+export { usePatientsSettings } from './hooks/usePatientsSettings.js';
+export type { PatientsSettings } from './hooks/usePatientsSettings.js';
+
 // Utils
 export { calculateAge } from './utils/age.js';
 export {
@@ -77,10 +81,14 @@ export {
   formatSex,
   formatReproductive,
   formatReferral,
+  SPECIES,
   SPECIES_LABELS,
+  SPECIES_ENABLED_DEFAULT,
+  speciesCodeFromText,
   STATUS_LABELS,
   SEX_LABELS,
   REPRODUCTIVE_LABELS,
   REFERRAL_LABELS,
   SPECIES_ICON,
 } from './utils/labels.js';
+export type { SpeciesDef } from './utils/labels.js';

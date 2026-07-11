@@ -217,12 +217,21 @@ export class PetRepository {
   // Stats
   // ---------------------------------------------------------------------------
 
-  async countBySpecies(): Promise<CountResult[]> {
+  /**
+   * Cuenta pacientes por especie.
+   * `excludeDeceased` refleja el setting `hideDeceased`: cuando está activo,
+   * los fallecidos no se cuentan, igual que el listado los oculta. Mantener
+   * ambos con el mismo criterio evita que el KPI de "Activos" se infle.
+   */
+  async countBySpecies({ excludeDeceased }: { excludeDeceased?: boolean } = {}): Promise<
+    CountResult[]
+  > {
     const rows = await this.db.ormQuery((tx) =>
       tx.execute(sql`
         SELECT species AS label, COUNT(*)::int AS count
         FROM ${petTable}
         WHERE deleted_at IS NULL
+        ${excludeDeceased ? sql`AND status <> 'deceased'` : sql``}
         GROUP BY species
         ORDER BY count DESC
       `)
@@ -230,12 +239,20 @@ export class PetRepository {
     return rows as unknown as CountResult[];
   }
 
-  async countByStatus(): Promise<CountResult[]> {
+  /**
+   * Cuenta pacientes por estado.
+   * Con `excludeDeceased` activo se omiten los fallecidos para que el total
+   * y los conteos coincidan con lo que el usuario ve en el listado.
+   */
+  async countByStatus({ excludeDeceased }: { excludeDeceased?: boolean } = {}): Promise<
+    CountResult[]
+  > {
     const rows = await this.db.ormQuery((tx) =>
       tx.execute(sql`
         SELECT status AS label, COUNT(*)::int AS count
         FROM ${petTable}
         WHERE deleted_at IS NULL
+        ${excludeDeceased ? sql`AND status <> 'deceased'` : sql``}
         GROUP BY status
         ORDER BY count DESC
       `)

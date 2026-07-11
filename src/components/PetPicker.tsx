@@ -102,11 +102,14 @@ export function PetPicker({
     onChange?.(null);
   }, [onChange]);
 
-  // Si hay mascota seleccionada, mostrar chip; sino, mostrar combobox
+  // Si hay mascota seleccionada, mostrar chip; sino, mostrar combobox.
+  // role=combobox + aria-expanded=false: el chip es el combobox "colapsado con
+  // valor", así el valor elegido queda expuesto a lectores de pantalla y al
+  // copiloto IA (antes el chip no tenía rol y la selección era invisible).
   if (value && selectedPet) {
     return React.createElement(
       'div',
-      { className },
+      { className, role: 'combobox', 'aria-expanded': false },
       React.createElement(
         UI.Chip,
         {

@@ -4,6 +4,7 @@
  */
 import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
+import { usePatientsSettings } from '../hooks/usePatientsSettings.js';
 import { usePetStats } from '../hooks/usePetStats.js';
 import type { PetStatsProps, StatDef } from '../types/components.js';
 import { SPECIES_ICON, SPECIES_LABELS } from '../utils/labels.js';
@@ -14,7 +15,10 @@ const UI = getHostUI();
 export function PetStats(props: PetStatsProps) {
   const { layout = 'row', extraStats = [], className = '' } = props;
 
-  const { stats, loading, error } = usePetStats();
+  // Mismo criterio que el listado: si `hideDeceased` está activo, los
+  // fallecidos no se cuentan en las stats (evita inflar Total / "Activos").
+  const { settings: pSettings } = usePatientsSettings();
+  const { stats, loading, error } = usePetStats({ excludeDeceased: pSettings.hideDeceased });
 
   if (error) {
     return React.createElement(UI.ErrorDisplay, {
