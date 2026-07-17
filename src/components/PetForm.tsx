@@ -316,7 +316,7 @@ export function PetForm(props: PetFormProps) {
           'text',
           formData,
           handleChange,
-          pSettings.requireMicrochip,
+          false,
           'Nro de microchip'
         )
       ),

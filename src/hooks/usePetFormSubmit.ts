@@ -51,11 +51,6 @@ function validateForm(
     return false;
   }
 
-  if (settings.requireMicrochip && !formData.microchip_number) {
-    toast.error(VALIDATION_TITLE, 'Debe indicar el número de microchip');
-    return false;
-  }
-
   const weight = formData.weight_kg ? Number(formData.weight_kg) : null;
   if (weight !== null && (weight <= 0 || weight >= 200)) {
     toast.error(VALIDATION_TITLE, 'El peso debe ser positivo y menor a 200 kg');
