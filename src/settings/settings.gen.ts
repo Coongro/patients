@@ -67,7 +67,7 @@ export interface PatientsSettings {
   readonly behaviorShowCompleteness: boolean;
   /** Sexo obligatorio — Requerir sexo al crear o editar un paciente · `patients.required.sex` · default: `false` */
   readonly requiredSex: boolean;
-  /** Fecha de nacimiento obligatoria — Requerir fecha de nacimiento al crear o editar un paciente · `patients.required.birthDate` · default: `false` */
+  /** Edad o fecha de nacimiento obligatoria — Requerir la edad del paciente al crear o editarlo. Se puede cargar como fecha exacta o como edad aproximada (lo habitual cuando no se conoce la fecha de nacimiento). · `patients.required.birthDate` · default: `false` */
   readonly requiredBirthDate: boolean;
 }
 

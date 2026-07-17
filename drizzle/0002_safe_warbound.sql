@@ -1,0 +1,1 @@
+ALTER TABLE "module_patients_pets" ADD COLUMN "birth_date_estimated" boolean DEFAULT false NOT NULL;

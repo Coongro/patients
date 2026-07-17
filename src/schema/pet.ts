@@ -9,6 +9,8 @@ export const petTable = pgTable('module_patients_pets', {
   sex: text('sex'),
   color_markings: text('color_markings'),
   birth_date: text('birth_date'),
+  // true = birth_date derivado de una edad aproximada (no es una fecha exacta conocida).
+  birth_date_estimated: boolean('birth_date_estimated').notNull().default(false),
   weight_kg: numeric('weight_kg'),
   microchip_number: text('microchip_number'),
   owner_id: text('owner_id').notNull(),

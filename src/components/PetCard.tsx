@@ -5,7 +5,7 @@ import { getHostReact, getHostUI } from '@coongro/plugin-sdk';
 
 import { usePet } from '../hooks/usePet.js';
 import type { PetCardProps } from '../types/components.js';
-import { calculateAge } from '../utils/age.js';
+import { formatAge } from '../utils/age.js';
 import { formatSpecies, formatStatus, formatSex, SPECIES_ICON } from '../utils/labels.js';
 
 const React = getHostReact();
@@ -52,7 +52,7 @@ export function PetCard(props: PetCardProps) {
   }
 
   const speciesIcon = SPECIES_ICON[pet.species] ?? 'PawPrint';
-  const age = calculateAge(pet.birth_date);
+  const age = formatAge(pet.birth_date, pet.birth_date_estimated);
   const infoItems = [formatSpecies(pet.species), pet.breed, formatSex(pet.sex), age].filter(
     Boolean
   );

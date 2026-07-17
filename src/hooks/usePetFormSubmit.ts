@@ -76,6 +76,7 @@ function buildPetData(formData: Record<string, unknown>): PetCreateData {
     sex: (formData.sex as string) || null,
     color_markings: (formData.color_markings as string) || null,
     birth_date: (formData.birth_date as string) || null,
+    birth_date_estimated: Boolean(formData.birth_date_estimated),
     weight_kg: weight ? String(weight) : null,
     microchip_number: (formData.microchip_number as string) || null,
     owner_id: formData.owner_id as string,

@@ -223,12 +223,13 @@
             {
               "key": "patients.required.birthDate",
               "type": "boolean",
-              "label": "Fecha de nacimiento obligatoria",
-              "description": "Requerir fecha de nacimiento al crear o editar un paciente",
+              "label": "Edad o fecha de nacimiento obligatoria",
+              "description": "Requerir la edad del paciente al crear o editarlo. Se puede cargar como fecha exacta o como edad aproximada (lo habitual cuando no se conoce la fecha de nacimiento).",
               "default": false,
               "tags": [
                 "pacientes",
                 "obligatorio",
+                "edad",
                 "fecha",
                 "nacimiento",
                 "requerir"
