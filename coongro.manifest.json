@@ -91,6 +91,37 @@
       ],
       "sections": [
         {
+          "id": "patients.registro.required",
+          "page": "patients.registro",
+          "label": "Campos obligatorios",
+          "order": 10,
+          "items": [
+            {
+              "key": "patients.required.sex",
+              "type": "boolean",
+              "label": "Sexo obligatorio",
+              "description": "Requerir sexo al crear o editar un paciente",
+              "default": false,
+              "tags": ["pacientes", "obligatorio", "sexo", "requerir"]
+            },
+            {
+              "key": "patients.required.birthDate",
+              "type": "boolean",
+              "label": "Edad o fecha de nacimiento obligatoria",
+              "description": "Requerir la edad del paciente al crear o editarlo. Se puede cargar como fecha exacta o como edad aproximada (lo habitual cuando no se conoce la fecha de nacimiento).",
+              "default": false,
+              "tags": [
+                "pacientes",
+                "obligatorio",
+                "edad",
+                "fecha",
+                "nacimiento",
+                "requerir"
+              ]
+            }
+          ]
+        },
+        {
           "id": "patients.general.species",
           "page": "patients.general",
           "label": "Especies habilitadas",
@@ -207,32 +238,45 @@
           ]
         },
         {
-          "id": "patients.registro.required",
-          "page": "patients.registro",
-          "label": "Campos obligatorios",
-          "order": 10,
+          "id": "patients.general.senior",
+          "page": "patients.general",
+          "label": "Edad senior",
+          "order": 15,
           "items": [
             {
-              "key": "patients.required.sex",
-              "type": "boolean",
-              "label": "Sexo obligatorio",
-              "description": "Requerir sexo al crear o editar un paciente",
-              "default": false,
-              "tags": ["pacientes", "obligatorio", "sexo", "requerir"]
+              "key": "patients.seniorAge.dog",
+              "type": "number",
+              "label": "Edad senior — perro (años)",
+              "description": "A partir de esta edad, un perro se marca como “Senior” en su ficha, para reforzar controles. Típico: 7 años (antes en razas grandes).",
+              "default": 7,
+              "min": 1,
+              "max": 30,
+              "tags": [
+                "patients",
+                "seniorage",
+                "dog",
+                "edad",
+                "senior",
+                "perro",
+                "años"
+              ]
             },
             {
-              "key": "patients.required.birthDate",
-              "type": "boolean",
-              "label": "Edad o fecha de nacimiento obligatoria",
-              "description": "Requerir la edad del paciente al crear o editarlo. Se puede cargar como fecha exacta o como edad aproximada (lo habitual cuando no se conoce la fecha de nacimiento).",
-              "default": false,
+              "key": "patients.seniorAge.cat",
+              "type": "number",
+              "label": "Edad senior — gato (años)",
+              "description": "A partir de esta edad, un gato se marca como “Senior” en su ficha. Típico: 10 años.",
+              "default": 10,
+              "min": 1,
+              "max": 30,
               "tags": [
-                "pacientes",
-                "obligatorio",
+                "patients",
+                "seniorage",
+                "cat",
                 "edad",
-                "fecha",
-                "nacimiento",
-                "requerir"
+                "senior",
+                "gato",
+                "años"
               ]
             }
           ]

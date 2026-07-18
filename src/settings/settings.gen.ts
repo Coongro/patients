@@ -18,6 +18,12 @@ function toEnum<T extends string>(v: unknown, options: readonly T[], fallback: T
   return typeof v === 'string' && (options as readonly string[]).includes(v) ? (v as T) : fallback;
 }
 
+function toNum(v: unknown, fallback: number): number {
+  if (typeof v === 'number' && !Number.isNaN(v)) return v;
+  if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) return Number(v);
+  return fallback;
+}
+
 export const DEFAULTS_SPECIES = {
   Perro: 'Perro',
   Gato: 'Gato',
@@ -29,6 +35,8 @@ export const DEFAULTS_SPECIES = {
 
 /** Tipo de cada setting por su key punteada (para getSetting). */
 export interface PatientsSettingsByKey {
+  'patients.required.sex': boolean;
+  'patients.required.birthDate': boolean;
   'patients.species.dog': boolean;
   'patients.species.cat': boolean;
   'patients.species.bird': boolean;
@@ -39,12 +47,16 @@ export interface PatientsSettingsByKey {
   'patients.behavior.openDetailOnCreate': boolean;
   'patients.behavior.hideDeceased': boolean;
   'patients.behavior.showCompleteness': boolean;
-  'patients.required.sex': boolean;
-  'patients.required.birthDate': boolean;
+  'patients.seniorAge.dog': number;
+  'patients.seniorAge.cat': number;
 }
 
 /** Settings del plugin con defaults aplicados y coerción por tipo. */
 export interface PatientsSettings {
+  /** Sexo obligatorio — Requerir sexo al crear o editar un paciente · `patients.required.sex` · default: `false` */
+  readonly requiredSex: boolean;
+  /** Edad o fecha de nacimiento obligatoria — Requerir la edad del paciente al crear o editarlo. Se puede cargar como fecha exacta o como edad aproximada (lo habitual cuando no se conoce la fecha de nacimiento). · `patients.required.birthDate` · default: `false` */
+  readonly requiredBirthDate: boolean;
   /** Perro — Habilitar especie Perro · `patients.species.dog` · default: `true` */
   readonly speciesDog: boolean;
   /** Gato — Habilitar especie Gato · `patients.species.cat` · default: `true` */
@@ -65,14 +77,16 @@ export interface PatientsSettings {
   readonly behaviorHideDeceased: boolean;
   /** Indicador de completitud — Mostrar qué porcentaje del perfil del paciente está completo · `patients.behavior.showCompleteness` · default: `false` */
   readonly behaviorShowCompleteness: boolean;
-  /** Sexo obligatorio — Requerir sexo al crear o editar un paciente · `patients.required.sex` · default: `false` */
-  readonly requiredSex: boolean;
-  /** Edad o fecha de nacimiento obligatoria — Requerir la edad del paciente al crear o editarlo. Se puede cargar como fecha exacta o como edad aproximada (lo habitual cuando no se conoce la fecha de nacimiento). · `patients.required.birthDate` · default: `false` */
-  readonly requiredBirthDate: boolean;
+  /** Edad senior — perro (años) — A partir de esta edad, un perro se marca como “Senior” en su ficha, para reforzar controles. Típico: 7 años (antes en razas grandes). · `patients.seniorAge.dog` · default: `7` */
+  readonly seniorAgeDog: number;
+  /** Edad senior — gato (años) — A partir de esta edad, un gato se marca como “Senior” en su ficha. Típico: 10 años. · `patients.seniorAge.cat` · default: `10` */
+  readonly seniorAgeCat: number;
 }
 
 /** Nombre de prop → key punteada del manifest. */
 export const SETTING_KEYS = {
+  requiredSex: 'patients.required.sex',
+  requiredBirthDate: 'patients.required.birthDate',
   speciesDog: 'patients.species.dog',
   speciesCat: 'patients.species.cat',
   speciesBird: 'patients.species.bird',
@@ -83,12 +97,14 @@ export const SETTING_KEYS = {
   behaviorOpenDetailOnCreate: 'patients.behavior.openDetailOnCreate',
   behaviorHideDeceased: 'patients.behavior.hideDeceased',
   behaviorShowCompleteness: 'patients.behavior.showCompleteness',
-  requiredSex: 'patients.required.sex',
-  requiredBirthDate: 'patients.required.birthDate',
+  seniorAgeDog: 'patients.seniorAge.dog',
+  seniorAgeCat: 'patients.seniorAge.cat',
 } as const;
 
 /** Valores por defecto (los mismos del manifest). */
 export const SETTING_DEFAULTS = {
+  'patients.required.sex': false,
+  'patients.required.birthDate': false,
   'patients.species.dog': true,
   'patients.species.cat': true,
   'patients.species.bird': false,
@@ -99,13 +115,15 @@ export const SETTING_DEFAULTS = {
   'patients.behavior.openDetailOnCreate': true,
   'patients.behavior.hideDeceased': true,
   'patients.behavior.showCompleteness': false,
-  'patients.required.sex': false,
-  'patients.required.birthDate': false,
+  'patients.seniorAge.dog': 7,
+  'patients.seniorAge.cat': 10,
 } as const;
 
 const COERCE: {
   [K in keyof PatientsSettingsByKey]: (values: Record<string, unknown>) => PatientsSettingsByKey[K];
 } = {
+  'patients.required.sex': (values) => toBool(values['patients.required.sex'], false),
+  'patients.required.birthDate': (values) => toBool(values['patients.required.birthDate'], false),
   'patients.species.dog': (values) => toBool(values['patients.species.dog'], true),
   'patients.species.cat': (values) => toBool(values['patients.species.cat'], true),
   'patients.species.bird': (values) => toBool(values['patients.species.bird'], false),
@@ -124,8 +142,8 @@ const COERCE: {
     toBool(values['patients.behavior.hideDeceased'], true),
   'patients.behavior.showCompleteness': (values) =>
     toBool(values['patients.behavior.showCompleteness'], false),
-  'patients.required.sex': (values) => toBool(values['patients.required.sex'], false),
-  'patients.required.birthDate': (values) => toBool(values['patients.required.birthDate'], false),
+  'patients.seniorAge.dog': (values) => toNum(values['patients.seniorAge.dog'], 7),
+  'patients.seniorAge.cat': (values) => toNum(values['patients.seniorAge.cat'], 10),
 };
 
 /** Lee UNA setting tipada desde los valores crudos del tenant (para handlers). */
@@ -139,6 +157,8 @@ export function getSetting<K extends keyof PatientsSettingsByKey>(
 /** Construye el objeto tipado desde los valores crudos (sin hook: handlers/tests). */
 export function readPatientsSettings(values: Record<string, unknown>): PatientsSettings {
   return {
+    requiredSex: COERCE['patients.required.sex'](values),
+    requiredBirthDate: COERCE['patients.required.birthDate'](values),
     speciesDog: COERCE['patients.species.dog'](values),
     speciesCat: COERCE['patients.species.cat'](values),
     speciesBird: COERCE['patients.species.bird'](values),
@@ -149,8 +169,8 @@ export function readPatientsSettings(values: Record<string, unknown>): PatientsS
     behaviorOpenDetailOnCreate: COERCE['patients.behavior.openDetailOnCreate'](values),
     behaviorHideDeceased: COERCE['patients.behavior.hideDeceased'](values),
     behaviorShowCompleteness: COERCE['patients.behavior.showCompleteness'](values),
-    requiredSex: COERCE['patients.required.sex'](values),
-    requiredBirthDate: COERCE['patients.required.birthDate'](values),
+    seniorAgeDog: COERCE['patients.seniorAge.dog'](values),
+    seniorAgeCat: COERCE['patients.seniorAge.cat'](values),
   };
 }
 
