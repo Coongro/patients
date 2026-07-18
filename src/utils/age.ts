@@ -63,6 +63,18 @@ export function birthDateToAge(birthDate: string | null): { years: number; month
   return { years: Math.max(0, years), months: Math.max(0, months) };
 }
 
+/** Edad en años cumplidos (para umbrales como "senior"). null si no hay fecha válida. */
+export function ageInYears(birthDate: string | null): number | null {
+  if (!birthDate) return null;
+  const birth = new Date(birthDate);
+  const now = new Date();
+  if (isNaN(birth.getTime()) || birth > now) return null;
+  let years = now.getFullYear() - birth.getFullYear();
+  const monthDiff = now.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) years--;
+  return years;
+}
+
 /**
  * Edad para mostrar. Si es estimada, se presenta aproximada ("~X años") — no tiene sentido
  * mostrar meses de precisión sobre una fecha inventada.

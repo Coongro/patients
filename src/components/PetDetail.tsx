@@ -15,7 +15,7 @@ import { usePetsByOwner } from '../hooks/usePetsByOwner.js';
 import { useVetOwner } from '../hooks/useVetOwner.js';
 import type { PetDetailProps } from '../types/components.js';
 import type { Pet } from '../types/pet.js';
-import { calculateAge, formatAge } from '../utils/age.js';
+import { ageInYears, calculateAge, formatAge } from '../utils/age.js';
 import {
   formatSpecies,
   formatStatus,
@@ -298,6 +298,11 @@ export function PetDetail(props: PetDetailProps) {
   const status = STATUS_CONFIG[pet.status] ?? STATUS_CONFIG.active;
   const dim = pet.status === 'deceased';
   const age = formatAge(pet.birth_date, pet.birth_date_estimated);
+  // Paciente "senior": edad >= umbral configurado para su especie (solo perro/gato).
+  const seniorThreshold = pSettings.seniorAge[pet.species];
+  const petYears = ageInYears(pet.birth_date);
+  const isSenior =
+    typeof seniorThreshold === 'number' && petYears !== null && petYears >= seniorThreshold;
   const hasAlerts =
     (pet.allergies && pet.allergies.length > 0) ||
     (pet.chronic_conditions && pet.chronic_conditions.length > 0);
@@ -414,9 +419,20 @@ export function PetDetail(props: PetDetailProps) {
           )
         ),
         React.createElement(
-          UI.Badge,
-          { variant: status.badge, size: 'sm' },
-          formatStatus(pet.status)
+          'div',
+          { className: 'flex items-center gap-2 flex-wrap' },
+          React.createElement(
+            UI.Badge,
+            { variant: status.badge, size: 'sm' },
+            formatStatus(pet.status)
+          ),
+          isSenior &&
+            React.createElement(
+              UI.Badge,
+              { variant: 'warning-soft', size: 'sm', className: 'gap-1' },
+              React.createElement(UI.DynamicIcon, { icon: 'HeartPulse', size: 12 }),
+              'Senior'
+            )
         )
       ),
       vitalChips.length > 0 &&

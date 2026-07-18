@@ -21,6 +21,9 @@ export interface PatientsSettings {
   // Campos obligatorios
   requireSex: boolean;
   requireBirthDate: boolean;
+
+  // Umbral de edad "senior" por especie (años). Solo perro y gato tienen umbral.
+  seniorAge: Record<string, number>;
 }
 
 /** Mapeo label español → código interno */
@@ -77,6 +80,7 @@ export function usePatientsSettings() {
     showCompleteness: raw.behaviorShowCompleteness,
     requireSex: raw.requiredSex,
     requireBirthDate: raw.requiredBirthDate,
+    seniorAge: { dog: raw.seniorAgeDog, cat: raw.seniorAgeCat },
   };
 
   return { settings, loading };
