@@ -9,7 +9,7 @@ import { usePets } from '../hooks/usePets.js';
 import type { PetsTableProps } from '../types/components.js';
 import type { SortDirection } from '../types/filters.js';
 import type { Pet } from '../types/pet.js';
-import { calculateAge } from '../utils/age.js';
+import { formatAge } from '../utils/age.js';
 import {
   formatSpecies,
   formatStatus,
@@ -165,7 +165,7 @@ export function PetsTable(props: PetsTableProps) {
         key: 'birth_date',
         header: 'Edad',
         sortable: true,
-        render: (p: Pet) => calculateAge(p.birth_date) || '—',
+        render: (p: Pet) => formatAge(p.birth_date, p.birth_date_estimated) || '—',
       },
       {
         key: 'weight_kg',
@@ -239,7 +239,7 @@ export function PetsTable(props: PetsTableProps) {
         React.createElement(
           'div',
           { className: 'text-xs', style: { color: 'var(--cg-text-muted)' } },
-          [calculateAge(pet.birth_date), pet.sex ? formatSex(pet.sex) : null]
+          [formatAge(pet.birth_date, pet.birth_date_estimated), pet.sex ? formatSex(pet.sex) : null]
             .filter(Boolean)
             .join(' · ') || '—'
         ),

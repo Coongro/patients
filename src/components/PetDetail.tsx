@@ -15,7 +15,7 @@ import { usePetsByOwner } from '../hooks/usePetsByOwner.js';
 import { useVetOwner } from '../hooks/useVetOwner.js';
 import type { PetDetailProps } from '../types/components.js';
 import type { Pet } from '../types/pet.js';
-import { calculateAge } from '../utils/age.js';
+import { calculateAge, formatAge } from '../utils/age.js';
 import {
   formatSpecies,
   formatStatus,
@@ -132,7 +132,12 @@ function getInfoFields(pet: Pet) {
     label: f.label,
     icon: f.key === 'species' ? (SPECIES_ICON[pet.species] ?? 'PawPrint') : f.icon,
     mono: f.mono,
-    value: f.format ? f.format(pet[f.key]) : (pet[f.key] as string | null),
+    value:
+      f.key === 'birth_date'
+        ? formatAge(pet.birth_date, pet.birth_date_estimated)
+        : f.format
+          ? f.format(pet[f.key])
+          : (pet[f.key] as string | null),
   })).filter((f) => f.value);
 }
 
@@ -292,7 +297,7 @@ export function PetDetail(props: PetDetailProps) {
   const palette = SPECIES_PALETTE[pet.species] ?? SPECIES_PALETTE.other;
   const status = STATUS_CONFIG[pet.status] ?? STATUS_CONFIG.active;
   const dim = pet.status === 'deceased';
-  const age = calculateAge(pet.birth_date);
+  const age = formatAge(pet.birth_date, pet.birth_date_estimated);
   const hasAlerts =
     (pet.allergies && pet.allergies.length > 0) ||
     (pet.chronic_conditions && pet.chronic_conditions.length > 0);

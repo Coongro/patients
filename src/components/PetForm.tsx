@@ -13,6 +13,7 @@ import { usePatientsSettings } from '../hooks/usePatientsSettings.js';
 import { usePet } from '../hooks/usePet.js';
 import { usePetFormSubmit } from '../hooks/usePetFormSubmit.js';
 import type { PetFormProps } from '../types/components.js';
+import { ageToBirthDate, birthDateToAge } from '../utils/age.js';
 import {
   SPECIES_LABELS,
   SPECIES_ICON,
@@ -99,6 +100,11 @@ export function PetForm(props: PetFormProps) {
   const [allergyInput, setAllergyInput] = useState('');
   const [chronicInput, setChronicInput] = useState('');
 
+  // Fecha de nacimiento: modo exacto (date picker) o edad aproximada (años + meses).
+  const [birthMode, setBirthMode] = useState<'exact' | 'approx'>('exact');
+  const [ageYears, setAgeYears] = useState('');
+  const [ageMonths, setAgeMonths] = useState('');
+
   // Controla si el usuario ya cambió la especie manualmente
   const userChangedSpecies = useRef(false);
 
@@ -125,6 +131,7 @@ export function PetForm(props: PetFormProps) {
         sex: pet.sex ?? '',
         color_markings: pet.color_markings ?? '',
         birth_date: pet.birth_date ?? '',
+        birth_date_estimated: pet.birth_date_estimated ?? false,
         weight_kg: pet.weight_kg ?? '',
         microchip_number: pet.microchip_number ?? '',
         owner_id: pet.owner_id,
@@ -136,12 +143,66 @@ export function PetForm(props: PetFormProps) {
         allergies_list: Array.isArray(pet.allergies) ? pet.allergies : [],
         chronic_list: Array.isArray(pet.chronic_conditions) ? pet.chronic_conditions : [],
       });
+      // Prellenar el modo de edad si la fecha guardada es estimada.
+      if (pet.birth_date_estimated && pet.birth_date) {
+        const { years, months } = birthDateToAge(pet.birth_date);
+        setBirthMode('approx');
+        setAgeYears(String(years));
+        setAgeMonths(months ? String(months) : '');
+      } else {
+        setBirthMode('exact');
+      }
     }
   }, [isEdit, pet]);
 
   const handleChange = useCallback((key: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  // Modo "edad aproximada": recalcula la fecha de nacimiento y la marca como estimada.
+  const applyAge = useCallback((y: string, m: string) => {
+    setAgeYears(y);
+    setAgeMonths(m);
+    const yy = parseInt(y, 10) || 0;
+    const mm = parseInt(m, 10) || 0;
+    if (yy === 0 && mm === 0) {
+      setFormData((prev) => ({ ...prev, birth_date: '', birth_date_estimated: false }));
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      birth_date: ageToBirthDate(yy, mm),
+      birth_date_estimated: true,
+    }));
+  }, []);
+
+  const switchBirthMode = useCallback(
+    (mode: 'exact' | 'approx') => {
+      setBirthMode(mode);
+      if (mode === 'exact') {
+        // Vuelve a fecha exacta: se limpian los campos de edad y deja de ser estimada.
+        setAgeYears('');
+        setAgeMonths('');
+        handleChange('birth_date_estimated', false);
+        return;
+      }
+      // Modo edad: si ya había una fecha, precargar los campos de edad desde ella.
+      const bd = formData.birth_date as string;
+      if (bd) {
+        const { years, months } = birthDateToAge(bd);
+        setAgeYears(String(years));
+        setAgeMonths(months ? String(months) : '');
+        setFormData((prev) => ({
+          ...prev,
+          birth_date: ageToBirthDate(years, months),
+          birth_date_estimated: true,
+        }));
+      } else {
+        handleChange('birth_date_estimated', true);
+      }
+    },
+    [formData.birth_date, handleChange]
+  );
 
   /** Crea un handler de Enter para agregar chips a una lista en formData */
   const makeChipKeyDown = useCallback(
@@ -292,13 +353,68 @@ export function PetForm(props: PetFormProps) {
         React.createElement(
           'div',
           { className: FIELD_CLASS },
-          renderLabel('Fecha nacimiento', pSettings.requireBirthDate),
-          React.createElement(DatePicker, {
-            value: (formData.birth_date as string) ?? '',
-            onChange: (date: string) => handleChange('birth_date', date),
-            maxDate: new Date().toISOString().slice(0, 10),
-            placeholder: 'Seleccionar fecha',
-          })
+          renderLabel('Fecha de nacimiento / edad', pSettings.requireBirthDate),
+          // Toggle: fecha exacta o edad aproximada (lo habitual cuando no se conoce la fecha).
+          React.createElement(
+            'div',
+            { className: 'flex gap-1.5' },
+            React.createElement(
+              UI.Button,
+              {
+                type: 'button',
+                size: 'sm',
+                variant: birthMode === 'exact' ? 'brand' : 'outline',
+                onClick: () => switchBirthMode('exact'),
+              },
+              'Fecha exacta'
+            ),
+            React.createElement(
+              UI.Button,
+              {
+                type: 'button',
+                size: 'sm',
+                variant: birthMode === 'approx' ? 'brand' : 'outline',
+                onClick: () => switchBirthMode('approx'),
+              },
+              'Edad aproximada'
+            )
+          ),
+          birthMode === 'exact'
+            ? React.createElement(DatePicker, {
+                value: (formData.birth_date as string) ?? '',
+                onChange: (date: string) => {
+                  handleChange('birth_date', date);
+                  handleChange('birth_date_estimated', false);
+                },
+                maxDate: new Date().toISOString().slice(0, 10),
+                placeholder: 'Seleccionar fecha',
+              })
+            : React.createElement(
+                'div',
+                { className: 'flex gap-2 items-center' },
+                React.createElement(UI.Input, {
+                  type: 'number',
+                  min: '0',
+                  value: ageYears,
+                  onChange: (e: { target: { value: string } }) =>
+                    applyAge(e.target.value, ageMonths),
+                  placeholder: 'Años',
+                }),
+                React.createElement(UI.Input, {
+                  type: 'number',
+                  min: '0',
+                  max: '11',
+                  value: ageMonths,
+                  onChange: (e: { target: { value: string } }) =>
+                    applyAge(ageYears, e.target.value),
+                  placeholder: 'Meses',
+                }),
+                React.createElement(
+                  'span',
+                  { className: 'text-xs text-cg-text-muted whitespace-nowrap' },
+                  'aprox.'
+                )
+              )
         ),
         renderField(
           'Color/Señas',

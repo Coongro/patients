@@ -15,6 +15,7 @@ export interface Pet {
   sex: string | null;
   color_markings: string | null;
   birth_date: string | null;
+  birth_date_estimated: boolean;
   weight_kg: string | null;
   microchip_number: string | null;
   owner_id: string;
@@ -40,6 +41,7 @@ export interface PetCreateData {
   sex?: string | null;
   color_markings?: string | null;
   birth_date?: string | null;
+  birth_date_estimated?: boolean;
   weight_kg?: string | null;
   microchip_number?: string | null;
   owner_id: string;
