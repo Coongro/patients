@@ -6,7 +6,7 @@
  */
 import { useSettings } from '@coongro/plugin-sdk';
 
-import { readPatientsSettings } from '../settings/settings.gen';
+import { readPatientsSettings } from '../settings/settings.gen.js';
 
 export interface PatientsSettings {
   // Especies habilitadas
