@@ -63,12 +63,36 @@
       {
         "module": "./dist/repositories/pet.repository.js",
         "export": "PetRepository",
-        "prefix": "patients.pets"
+        "prefix": "patients.pets",
+        "actions": [
+          "list",
+          "getById",
+          "create",
+          "update",
+          "delete",
+          "softDelete",
+          "restore",
+          "search",
+          "listByOwner",
+          "findByMicrochip",
+          "countBySpecies",
+          "countByStatus"
+        ]
       },
       {
         "module": "./dist/repositories/vet-owner.repository.js",
         "export": "VetOwnerRepository",
-        "prefix": "patients.owners"
+        "prefix": "patients.owners",
+        "actions": [
+          "list",
+          "getById",
+          "getByContactId",
+          "create",
+          "update",
+          "delete",
+          "search",
+          "ensureOwner"
+        ]
       }
     ],
     "settings": {
